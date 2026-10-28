@@ -14,13 +14,17 @@ public final class DataStore: ObservableObject {
     
     private init() {
         let schema = Schema([TodoTask.self])
-        do {
-            let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-            self.container = try ModelContainer(for: schema, configurations: [config])
-            seedStarterTasksIfNeeded()
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        if let persistentContainer = try? ModelContainer(for: schema, configurations: [config]) {
+            self.container = persistentContainer
+        } else {
+            // Fallback to in-memory store if on-disk schema cannot be migrated or opened
+            let memConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            self.container = (try? ModelContainer(for: schema, configurations: [memConfig])) ?? {
+                fatalError("Fatal: Failed to initialize even an in-memory ModelContainer")
+            }()
         }
+        seedStarterTasksIfNeeded()
     }
     
     public func seedStarterTasksIfNeeded() {
@@ -83,6 +87,11 @@ public final class DataStore: ObservableObject {
             }
         }
         return listTasks
+    }
+    
+    public func task(with id: UUID) -> TodoTask? {
+        let descriptor = FetchDescriptor<TodoTask>(predicate: #Predicate { $0.id == id })
+        return try? context.fetch(descriptor).first
     }
     
     public func addTask(title: String, to list: TaskListType, notes: String? = nil, reminderDate: Date? = nil) {

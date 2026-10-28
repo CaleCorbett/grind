@@ -81,9 +81,7 @@ public struct TaskListCardView: View {
         .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 3)
         .dropDestination(for: String.self) { items, location in
             guard let idString = items.first, let uuid = UUID(uuidString: idString) else { return false }
-            if let task = DataStore.shared.tasks(for: .today, includeArchived: true).first(where: { $0.id == uuid }) ??
-                          DataStore.shared.tasks(for: .next, includeArchived: true).first(where: { $0.id == uuid }) ??
-                          DataStore.shared.tasks(for: .someday, includeArchived: true).first(where: { $0.id == uuid }) {
+            if let task = DataStore.shared.task(with: uuid) {
                 onMoveTask(task, listType)
                 return true
             }
@@ -206,10 +204,14 @@ public struct TaskListCardView: View {
         newTodoText = ""
     }
     
-    private var formattedTodayDate: String {
+    private static let todayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE, MMMM d"
-        return formatter.string(from: Date())
+        return formatter
+    }()
+    
+    private var formattedTodayDate: String {
+        Self.todayFormatter.string(from: Date())
     }
     
     private var emptyIconName: String {

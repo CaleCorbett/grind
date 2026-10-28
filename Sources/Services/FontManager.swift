@@ -25,8 +25,7 @@ public final class FontManager {
         
         for name in fontNames {
             if let url = bundle.url(forResource: name, withExtension: nil) {
-                var errorRef: Unmanaged<CFError>?
-                CTFontManagerRegisterFontsForURL(url as CFURL, .process, &errorRef)
+                CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
             }
         }
     }

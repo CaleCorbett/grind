@@ -101,14 +101,23 @@ public struct TaskRowView: View {
         }
     }
     
-    private func formatTime(_ date: Date) -> String {
+    private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        let calendar = Calendar.current
-        if calendar.isDateInToday(date) {
-            formatter.dateFormat = "h:mm a"
+        formatter.dateFormat = "h:mm a"
+        return formatter
+    }()
+    
+    private static let dateTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, h:mm a"
+        return formatter
+    }()
+    
+    private func formatTime(_ date: Date) -> String {
+        if Calendar.current.isDateInToday(date) {
+            return Self.timeFormatter.string(from: date)
         } else {
-            formatter.dateFormat = "MMM d, h:mm a"
+            return Self.dateTimeFormatter.string(from: date)
         }
-        return formatter.string(from: date)
     }
 }

@@ -1,39 +1,60 @@
 import AppKit
+import Carbon
 import Combine
 
 public final class GlobalHotKeyManager: ObservableObject {
     public static let shared = GlobalHotKeyManager()
     
     @Published public var shouldOpenQuickAdd: Bool = false
-    private var globalMonitor: Any?
-    private var localMonitor: Any?
+    private var hotKeyRef: EventHotKeyRef?
+    private var eventHandler: EventHandlerRef?
     
     private init() {
-        setupMonitors()
+        setupHotKey()
     }
     
-    public func setupMonitors() {
-        // Monitor for Control + Option + Space
-        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if event.modifierFlags.contains([.control, .option]) && event.keyCode == 49 { // 49 is Space
-                self?.shouldOpenQuickAdd = true
-                return nil
+    public func setupHotKey() {
+        var eventType = EventTypeSpec(
+            eventClass: OSType(kEventClassKeyboard),
+            eventKind: UInt32(kEventHotKeyPressed)
+        )
+        
+        let handler: EventHandlerUPP = { (_, inEvent, _) -> OSStatus in
+            Task { @MainActor in
+                NSApp.activate(ignoringOtherApps: true)
+                GlobalHotKeyManager.shared.shouldOpenQuickAdd = true
             }
-            return event
+            return noErr
         }
         
-        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if event.modifierFlags.contains([.control, .option]) && event.keyCode == 49 {
-                DispatchQueue.main.async {
-                    NSApp.activate(ignoringOtherApps: true)
-                    self?.shouldOpenQuickAdd = true
-                }
-            }
-        }
+        InstallEventHandler(
+            GetApplicationEventTarget(),
+            handler,
+            1,
+            &eventType,
+            nil,
+            &eventHandler
+        )
+        
+        let hotKeyID = EventHotKeyID(signature: OSType(0x47524E44), id: 1) // "GRND"
+        // Control + Option + Space
+        let modifiers = UInt32(controlKey | optionKey)
+        RegisterEventHotKey(
+            UInt32(kVK_Space),
+            modifiers,
+            hotKeyID,
+            GetApplicationEventTarget(),
+            0,
+            &hotKeyRef
+        )
     }
     
     deinit {
-        if let gm = globalMonitor { NSEvent.removeMonitor(gm) }
-        if let lm = localMonitor { NSEvent.removeMonitor(lm) }
+        if let hotKeyRef = hotKeyRef {
+            UnregisterEventHotKey(hotKeyRef)
+        }
+        if let eventHandler = eventHandler {
+            RemoveEventHandler(eventHandler)
+        }
     }
 }

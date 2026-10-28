@@ -118,18 +118,27 @@ public struct ArchiveView: View {
     
     private var archivedTasks: [TodoTask] {
         _ = store.refreshTrigger
-        let descriptor = FetchDescriptor<TodoTask>()
-        let all = (try? store.context.fetch(descriptor)) ?? []
-        return all
-            .filter { $0.isArchived || $0.status == .completed }
-            .filter { searchText.isEmpty ? true : $0.title.localizedCaseInsensitiveContains(searchText) }
-            .sorted { ($0.completionDate ?? Date.distantPast) > ($1.completionDate ?? Date.distantPast) }
+        let descriptor = FetchDescriptor<TodoTask>(
+            predicate: #Predicate<TodoTask> { task in
+                task.isArchived || task.rawStatus == 2
+            },
+            sortBy: [SortDescriptor(\.completionDate, order: .reverse)]
+        )
+        let list = (try? store.context.fetch(descriptor)) ?? []
+        if searchText.isEmpty {
+            return list
+        }
+        return list.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
     }
     
-    private func formatDate(_ date: Date) -> String {
+    private static let archiveDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
-        return formatter.string(from: date)
+        return formatter
+    }()
+    
+    private func formatDate(_ date: Date) -> String {
+        Self.archiveDateFormatter.string(from: date)
     }
 }

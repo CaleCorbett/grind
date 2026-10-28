@@ -8,6 +8,8 @@ public struct ParsedQuickAdd {
 }
 
 public final class QuickAddParser {
+    private static let dateDetector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue)
+    
     public static func parse(_ rawInput: String) -> ParsedQuickAdd {
         let trimmed = rawInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -37,8 +39,8 @@ public final class QuickAddParser {
             working = removePattern(working, pattern: "\\b(to\\s+|on\\s+)?today(\\s+(list|card))?\\b")
         }
         
-        // 2. Natural language date parsing using NSDataDetector
-        if let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue) {
+        // 2. Natural language date parsing using cached NSDataDetector
+        if let detector = Self.dateDetector {
             let matches = detector.matches(in: working, options: [], range: NSRange(location: 0, length: working.utf16.count))
             
             // Prefer the last date match (usually at the end of phrase, e.g. "Buy coffee Friday 3pm")

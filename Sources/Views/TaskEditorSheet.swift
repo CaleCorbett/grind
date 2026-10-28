@@ -161,11 +161,22 @@ public struct TaskEditorSheet: View {
     }
     
     private func saveChanges() {
+        let oldReminder = task.reminderDate
         task.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
         task.notes = notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : notes
         task.list = selectedList
         task.status = selectedStatus
-        task.reminderDate = hasReminder ? reminderDate : nil
+        let newReminder = hasReminder ? reminderDate : nil
+        task.reminderDate = newReminder
+        
+        if oldReminder != newReminder {
+            if let newDate = newReminder, newDate > Date() {
+                ReminderService.shared.scheduleReminder(for: task)
+            } else {
+                ReminderService.shared.cancelReminder(for: task)
+            }
+        }
+        
         try? DataStore.shared.context.save()
         DataStore.shared.refreshTrigger = UUID()
     }

@@ -37,8 +37,8 @@ cp "$DIR/Resources"/*.wav "$APP_BUNDLE/Contents/Resources/"
 cp "$DIR/Resources"/*.otf "$APP_BUNDLE/Contents/Resources/"
 cp "$DIR/Resources"/*.icns "$APP_BUNDLE/Contents/Resources/"
 
-echo "Signing application bundle..."
-codesign --force --deep --sign - "$APP_BUNDLE"
+echo "Signing application bundle with Hardened Runtime and App Sandbox..."
+codesign --force --deep --options runtime --entitlements "$DIR/Entitlements.plist" --sign - "$APP_BUNDLE"
 
 echo "=== Build Complete! ==="
 echo "App bundle: $APP_BUNDLE"

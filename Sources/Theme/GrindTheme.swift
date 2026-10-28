@@ -42,12 +42,6 @@ public enum GeistWeight {
 
 public extension Font {
     static func geist(_ weight: GeistWeight = .regular, size: CGFloat) -> Font {
-        if NSFont(name: weight.fontName, size: size) != nil {
-            return .custom(weight.fontName, size: size)
-        }
-        if weight == .mono {
-            return .system(size: size, weight: weight.systemWeight, design: .monospaced)
-        }
-        return .system(size: size, weight: weight.systemWeight, design: .rounded)
+        .custom(weight.fontName, size: size)
     }
 }

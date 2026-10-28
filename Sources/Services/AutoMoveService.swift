@@ -11,12 +11,12 @@ public final class AutoMoveService {
         let calendar = Calendar.current
         let today = Date()
         
-        let descriptor = FetchDescriptor<TodoTask>()
-        guard let allTasks = try? DataStore.shared.context.fetch(descriptor) else { return }
+        let descriptor = FetchDescriptor<TodoTask>(predicate: #Predicate { !$0.isArchived })
+        guard let activeTasks = try? DataStore.shared.context.fetch(descriptor) else { return }
         
         var movedCount = 0
         
-        for task in allTasks where !task.isArchived {
+        for task in activeTasks {
             // 1. Move tasks from Next or Someday to Today if reminder is due today or past
             if AppSettings.shared.autoMoveRemindersToToday && task.list != .today, let reminder = task.reminderDate {
                 if calendar.isDateInToday(reminder) || reminder < today {

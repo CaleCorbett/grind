@@ -149,16 +149,32 @@ public struct QuickAddPanel: View {
         manualListOverride = nil
     }
     
+    private static let todayReminderFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "Today, h:mm a"
+        return f
+    }()
+    
+    private static let tomorrowReminderFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "Tomorrow, h:mm a"
+        return f
+    }()
+    
+    private static let defaultReminderFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEE, MMM d, h:mm a"
+        return f
+    }()
+    
     private func formatReminder(_ date: Date) -> String {
-        let formatter = DateFormatter()
         let calendar = Calendar.current
         if calendar.isDateInToday(date) {
-            formatter.dateFormat = "Today, h:mm a"
+            return Self.todayReminderFormatter.string(from: date)
         } else if calendar.isDateInTomorrow(date) {
-            formatter.dateFormat = "Tomorrow, h:mm a"
+            return Self.tomorrowReminderFormatter.string(from: date)
         } else {
-            formatter.dateFormat = "EEE, MMM d, h:mm a"
+            return Self.defaultReminderFormatter.string(from: date)
         }
-        return formatter.string(from: date)
     }
 }

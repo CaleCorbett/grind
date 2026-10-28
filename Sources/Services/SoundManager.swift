@@ -20,6 +20,7 @@ public enum SoundEvent {
     }
 }
 
+@MainActor
 public final class SoundManager {
     public static let shared = SoundManager()
     private var soundCache: [String: NSSound] = [:]
