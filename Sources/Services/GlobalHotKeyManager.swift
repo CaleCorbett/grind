@@ -28,6 +28,7 @@ public final class GlobalHotKeyManager: ObservableObject {
     private var hotKeyRef: EventHotKeyRef?
     private var eventHandler: EventHandlerRef?
     private var floatingPanel: FloatingQuickAddNSPanel?
+    private var isDismissingPanel: Bool = false
     
     private init() {
         setupHotKey()
@@ -97,6 +98,7 @@ public final class GlobalHotKeyManager: ObservableObject {
                 defer: false
             )
             created.isFloatingPanel = true
+            created.isReleasedWhenClosed = false
             created.level = .floating
             created.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient]
             created.titleVisibility = .hidden
@@ -152,7 +154,10 @@ public final class GlobalHotKeyManager: ObservableObject {
     
     @MainActor
     public func dismissFloatingPanel() {
-        floatingPanel?.orderOut(nil)
+        guard !isDismissingPanel, let panel = floatingPanel, panel.isVisible else { return }
+        isDismissingPanel = true
+        panel.orderOut(nil)
+        isDismissingPanel = false
     }
     
     deinit {

@@ -14,27 +14,27 @@ public final class AutoMoveService {
         let descriptor = FetchDescriptor<TodoTask>(predicate: #Predicate { !$0.isArchived })
         guard let activeTasks = try? DataStore.shared.context.fetch(descriptor) else { return }
         
-        var movedCount = 0
+        var hasChanges = false
         
         for task in activeTasks {
             // 1. Move tasks from Next or Someday to Today if reminder is due today or past
             if AppSettings.shared.autoMoveRemindersToToday && task.list != .today, let reminder = task.reminderDate {
                 if calendar.isDateInToday(reminder) || reminder < today {
                     task.list = .today
-                    movedCount += 1
+                    hasChanges = true
                 }
             }
             
             // 2. Archive completed tasks if archiveImmediately is enabled
-            if AppSettings.shared.archiveImmediately && task.status == .completed {
+            if AppSettings.shared.archiveImmediately && task.status == .completed && !task.isArchived {
                 task.isArchived = true
+                hasChanges = true
             }
         }
         
-        if movedCount > 0 {
+        if hasChanges {
             try? DataStore.shared.context.save()
-            DataStore.shared.refreshTrigger = UUID()
-            print("AutoMove: Swept \(movedCount) task(s) to Today based on reminders.")
+            DataStore.shared.reloadAll()
         }
     }
 }

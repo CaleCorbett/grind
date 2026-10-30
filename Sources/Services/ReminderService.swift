@@ -1,5 +1,5 @@
 import Foundation
-import UserNotifications
+@preconcurrency import UserNotifications
 
 @MainActor
 public final class ReminderService {
@@ -7,8 +7,23 @@ public final class ReminderService {
     
     private init() {}
     
+    /// Safely returns `UNUserNotificationCenter.current()` only when running inside a valid `.app` bundle.
+    /// Calling `UNUserNotificationCenter.current()` from a bare executable (`swift run` / CLI test) throws
+    /// an uncaught Objective-C `NSInternalInconsistencyException` (`bundleProxyForCurrentProcess is nil`).
+    private var notificationCenter: UNUserNotificationCenter? {
+        guard Bundle.main.bundleIdentifier != nil,
+              Bundle.main.bundleURL.pathExtension == "app" else {
+            return nil
+        }
+        return UNUserNotificationCenter.current()
+    }
+    
     public func requestAuthorization(completion: ((Bool) -> Void)? = nil) {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+        guard let center = notificationCenter else {
+            completion?(false)
+            return
+        }
+        center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if let error = error {
                 print("Notification permission error: \(error)")
             }
@@ -19,19 +34,20 @@ public final class ReminderService {
     }
     
     public func scheduleReminder(for task: TodoTask) {
-        guard let reminderDate = task.reminderDate, reminderDate > Date() else { return }
+        guard let reminderDate = task.reminderDate, reminderDate > Date(),
+              let center = notificationCenter else { return }
         let taskId = task.id.uuidString
         let taskTitle = task.title
         let listTitle = task.list.title
         
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
+        center.getNotificationSettings { settings in
             switch settings.authorizationStatus {
             case .authorized, .provisional:
                 Task { @MainActor in
                     ReminderService.shared.addNotificationRequest(id: taskId, title: taskTitle, listTitle: listTitle, at: reminderDate)
                 }
             case .notDetermined:
-                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+                center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
                     if granted {
                         Task { @MainActor in
                             ReminderService.shared.addNotificationRequest(id: taskId, title: taskTitle, listTitle: listTitle, at: reminderDate)
@@ -49,6 +65,7 @@ public final class ReminderService {
     }
     
     private func addNotificationRequest(id: String, title: String, listTitle: String, at reminderDate: Date) {
+        guard let center = notificationCenter else { return }
         let content = UNMutableNotificationContent()
         content.title = "Grind"
         content.subtitle = listTitle
@@ -66,7 +83,7 @@ public final class ReminderService {
             trigger: trigger
         )
         
-        UNUserNotificationCenter.current().add(request) { error in
+        center.add(request) { error in
             if let error = error {
                 print("Error scheduling reminder: \(error)")
             }
@@ -74,6 +91,13 @@ public final class ReminderService {
     }
     
     public func cancelReminder(for task: TodoTask) {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [task.id.uuidString])
+        guard task.reminderDate != nil, let center = notificationCenter else { return }
+        center.removePendingNotificationRequests(withIdentifiers: [task.id.uuidString])
+    }
+    
+    public func cancelReminders(for tasks: [TodoTask]) {
+        let ids = tasks.filter { $0.reminderDate != nil }.map { $0.id.uuidString }
+        guard !ids.isEmpty, let center = notificationCenter else { return }
+        center.removePendingNotificationRequests(withIdentifiers: ids)
     }
 }

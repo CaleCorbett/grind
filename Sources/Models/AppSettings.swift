@@ -5,35 +5,40 @@ import Combine
 public final class AppSettings: ObservableObject {
     public static let shared = AppSettings()
     
-    @Published public var soundEffectsEnabled: Bool {
+    public var soundEffectsEnabled: Bool {
+        willSet { if newValue != soundEffectsEnabled { objectWillChange.send() } }
         didSet {
             guard oldValue != soundEffectsEnabled else { return }
             UserDefaults.standard.set(soundEffectsEnabled, forKey: "soundEffectsEnabled")
         }
     }
     
-    @Published public var soundPack: String {
+    public var soundPack: String {
+        willSet { if newValue != soundPack { objectWillChange.send() } }
         didSet {
             guard oldValue != soundPack else { return }
             UserDefaults.standard.set(soundPack, forKey: "soundPack")
         }
     }
     
-    @Published public var allowInProgress: Bool {
+    public var allowInProgress: Bool {
+        willSet { if newValue != allowInProgress { objectWillChange.send() } }
         didSet {
             guard oldValue != allowInProgress else { return }
             UserDefaults.standard.set(allowInProgress, forKey: "allowInProgress")
         }
     }
     
-    @Published public var addTaskPosition: String {
+    public var addTaskPosition: String {
+        willSet { if newValue != addTaskPosition { objectWillChange.send() } }
         didSet {
             guard oldValue != addTaskPosition else { return }
             UserDefaults.standard.set(addTaskPosition, forKey: "addTaskPosition")
         }
     }
     
-    @Published public var moveCompletedToBottom: Bool {
+    public var moveCompletedToBottom: Bool {
+        willSet { if newValue != moveCompletedToBottom { objectWillChange.send() } }
         didSet {
             guard oldValue != moveCompletedToBottom else { return }
             UserDefaults.standard.set(moveCompletedToBottom, forKey: "moveCompletedToBottom")
@@ -43,49 +48,56 @@ public final class AppSettings: ObservableObject {
         }
     }
     
-    @Published public var smartQuickAddEnabled: Bool {
+    public var smartQuickAddEnabled: Bool {
+        willSet { if newValue != smartQuickAddEnabled { objectWillChange.send() } }
         didSet {
             guard oldValue != smartQuickAddEnabled else { return }
             UserDefaults.standard.set(smartQuickAddEnabled, forKey: "smartQuickAddEnabled")
         }
     }
     
-    @Published public var showInMenuBar: Bool {
+    public var showInMenuBar: Bool {
+        willSet { if newValue != showInMenuBar { objectWillChange.send() } }
         didSet {
             guard oldValue != showInMenuBar else { return }
             UserDefaults.standard.set(showInMenuBar, forKey: "showInMenuBar")
         }
     }
     
-    @Published public var menuBarBadge: String {
+    public var menuBarBadge: String {
+        willSet { if newValue != menuBarBadge { objectWillChange.send() } }
         didSet {
             guard oldValue != menuBarBadge else { return }
             UserDefaults.standard.set(menuBarBadge, forKey: "menuBarBadge")
         }
     }
     
-    @Published public var appearanceMode: String {
+    public var appearanceMode: String {
+        willSet { if newValue != appearanceMode { objectWillChange.send() } }
         didSet {
             guard oldValue != appearanceMode else { return }
             UserDefaults.standard.set(appearanceMode, forKey: "appearanceMode")
         }
     }
     
-    @Published public var selectedAppIcon: String {
+    public var selectedAppIcon: String {
+        willSet { if newValue != selectedAppIcon { objectWillChange.send() } }
         didSet {
             guard oldValue != selectedAppIcon else { return }
             UserDefaults.standard.set(selectedAppIcon, forKey: "selectedAppIcon")
         }
     }
     
-    @Published public var archiveImmediately: Bool {
+    public var archiveImmediately: Bool {
+        willSet { if newValue != archiveImmediately { objectWillChange.send() } }
         didSet {
             guard oldValue != archiveImmediately else { return }
             UserDefaults.standard.set(archiveImmediately, forKey: "archiveImmediately")
         }
     }
     
-    @Published public var autoMoveRemindersToToday: Bool {
+    public var autoMoveRemindersToToday: Bool {
+        willSet { if newValue != autoMoveRemindersToToday { objectWillChange.send() } }
         didSet {
             guard oldValue != autoMoveRemindersToToday else { return }
             UserDefaults.standard.set(autoMoveRemindersToToday, forKey: "autoMoveRemindersToToday")

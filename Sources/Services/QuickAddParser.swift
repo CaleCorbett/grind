@@ -39,8 +39,8 @@ public final class QuickAddParser {
             working = removePattern(working, pattern: "\\b(to\\s+|on\\s+)?today(\\s+(list|card))?\\b")
         }
         
-        // 2. Natural language date parsing using cached NSDataDetector
-        if let detector = Self.dateDetector {
+        // 2. Natural language date parsing using cached NSDataDetector (bounded length for responsiveness)
+        if working.count <= 280, let detector = Self.dateDetector {
             let matches = detector.matches(in: working, options: [], range: NSRange(location: 0, length: working.utf16.count))
             
             // Prefer the last date match (usually at the end of phrase, e.g. "Buy coffee Friday 3pm")

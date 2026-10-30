@@ -10,14 +10,14 @@ public final class DataStore: ObservableObject {
     public let container: ModelContainer
     public var context: ModelContext { container.mainContext }
     
-    @Published public private(set) var todayTasks: [TodoTask] = []
-    @Published public private(set) var nextTasks: [TodoTask] = []
-    @Published public private(set) var somedayTasks: [TodoTask] = []
-    @Published public private(set) var archivedTasks: [TodoTask] = []
-    @Published public private(set) var todayRemainingCount: Int = 0
-    @Published public private(set) var todayTotalCount: Int = 0
+    public private(set) var todayTasks: [TodoTask] = []
+    public private(set) var nextTasks: [TodoTask] = []
+    public private(set) var somedayTasks: [TodoTask] = []
+    public private(set) var archivedTasks: [TodoTask] = []
+    public private(set) var todayRemainingCount: Int = 0
+    public private(set) var todayTotalCount: Int = 0
     
-    @Published public var refreshTrigger: UUID = UUID() {
+    public var refreshTrigger: UUID = UUID() {
         didSet {
             reloadAll()
         }
@@ -25,7 +25,8 @@ public final class DataStore: ObservableObject {
     
     private init() {
         let schema = Schema([TodoTask.self])
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let inMemoryEnv = ProcessInfo.processInfo.environment["GRIND_IN_MEMORY_STORE"] == "1"
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemoryEnv)
         if let persistentContainer = try? ModelContainer(for: schema, configurations: [config]) {
             self.container = persistentContainer
         } else {
@@ -87,19 +88,21 @@ public final class DataStore: ObservableObject {
         let fetchedNext = fetchTasksFromStore(for: .next, moveCompletedToBottom: moveCompleted)
         let fetchedSomeday = fetchTasksFromStore(for: .someday, moveCompletedToBottom: moveCompleted)
         
-        self.todayTasks = fetchedToday
-        self.nextTasks = fetchedNext
-        self.somedayTasks = fetchedSomeday
-        self.todayTotalCount = fetchedToday.count
-        self.todayRemainingCount = fetchedToday.filter { $0.status != .completed }.count
-        
         let archiveDesc = FetchDescriptor<TodoTask>(
             predicate: #Predicate<TodoTask> { task in
                 task.isArchived || task.rawStatus == 2
             },
             sortBy: [SortDescriptor(\.completionDate, order: .reverse)]
         )
-        self.archivedTasks = (try? context.fetch(archiveDesc)) ?? []
+        let fetchedArchived = (try? context.fetch(archiveDesc)) ?? []
+        
+        objectWillChange.send()
+        self.todayTasks = fetchedToday
+        self.nextTasks = fetchedNext
+        self.somedayTasks = fetchedSomeday
+        self.todayTotalCount = fetchedToday.count
+        self.todayRemainingCount = fetchedToday.filter { $0.status != .completed }.count
+        self.archivedTasks = fetchedArchived
     }
     
     private func fetchTasksFromStore(for list: TaskListType, moveCompletedToBottom: Bool) -> [TodoTask] {
@@ -247,9 +250,7 @@ public final class DataStore: ObservableObject {
     
     public func deleteTasks(_ tasksToDelete: [TodoTask]) {
         guard !tasksToDelete.isEmpty else { return }
-        for task in tasksToDelete {
-            ReminderService.shared.cancelReminder(for: task)
-        }
+        ReminderService.shared.cancelReminders(for: tasksToDelete)
         UndoToastManager.shared.recordDeletion(of: tasksToDelete)
         for task in tasksToDelete {
             context.delete(task)
@@ -279,10 +280,12 @@ public final class DataStore: ObservableObject {
     
     public func setStatus(_ status: TaskStatus, for targetTasks: [TodoTask]) {
         guard !targetTasks.isEmpty else { return }
+        if status == .completed {
+            ReminderService.shared.cancelReminders(for: targetTasks)
+        }
         for task in targetTasks {
             task.status = status
             if status == .completed {
-                ReminderService.shared.cancelReminder(for: task)
                 if AppSettings.shared.archiveImmediately {
                     task.isArchived = true
                 }

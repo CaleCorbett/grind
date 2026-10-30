@@ -91,7 +91,10 @@ public struct TaskListCardView: View {
     }
     
     private var inlineParsed: ParsedQuickAdd {
-        QuickAddParser.parse(newTodoText)
+        guard !newTodoText.isEmpty else {
+            return ParsedQuickAdd(cleanTitle: "", targetList: listType, reminderDate: nil, matchedDateString: nil)
+        }
+        return QuickAddParser.parse(newTodoText)
     }
     
     public var body: some View {

@@ -70,24 +70,22 @@ public struct MenuBarTodayView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 4) {
                         ForEach(todayTasks) { task in
+                            let isCompleted = (task.status == .completed)
                             HStack(spacing: 9) {
                                 StatusToggleView(status: task.status) {
                                     store.toggleTaskStatus(task)
                                 }
                                 Text(task.title)
                                     .font(.geist(.medium, size: 13))
-                                    .foregroundColor(task.status == .completed ? GrindColors.secondary : GrindColors.primary)
+                                    .foregroundColor(isCompleted ? GrindColors.secondary : GrindColors.primary)
                                     .lineLimit(1)
                                     .overlay(alignment: .leading) {
-                                        GeometryReader { geo in
-                                            Rectangle()
-                                                .fill(GrindColors.secondary)
-                                                .frame(width: geo.size.width, height: 1.2)
-                                                .offset(y: geo.size.height * 0.52)
-                                                .scaleEffect(x: task.status == .completed ? 1.0 : 0.0, y: 1.0, anchor: .leading)
-                                                .animation(GrindTheme.easeSpring, value: task.status == .completed)
-                                        }
-                                        .allowsHitTesting(false)
+                                        Rectangle()
+                                            .fill(GrindColors.secondary)
+                                            .frame(height: 1.2)
+                                            .scaleEffect(x: isCompleted ? 1.0 : 0.0, y: 1.0, anchor: .leading)
+                                            .animation(GrindTheme.easeSpring, value: isCompleted)
+                                            .allowsHitTesting(false)
                                     }
                                 Spacer()
                             }
