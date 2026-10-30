@@ -10,7 +10,18 @@ public final class DataStore: ObservableObject {
     public let container: ModelContainer
     public var context: ModelContext { container.mainContext }
     
-    @Published public var refreshTrigger: UUID = UUID()
+    @Published public private(set) var todayTasks: [TodoTask] = []
+    @Published public private(set) var nextTasks: [TodoTask] = []
+    @Published public private(set) var somedayTasks: [TodoTask] = []
+    @Published public private(set) var archivedTasks: [TodoTask] = []
+    @Published public private(set) var todayRemainingCount: Int = 0
+    @Published public private(set) var todayTotalCount: Int = 0
+    
+    @Published public var refreshTrigger: UUID = UUID() {
+        didSet {
+            reloadAll()
+        }
+    }
     
     private init() {
         let schema = Schema([TodoTask.self])
@@ -25,6 +36,7 @@ public final class DataStore: ObservableObject {
             }()
         }
         seedStarterTasksIfNeeded()
+        reloadAll()
     }
     
     public func seedStarterTasksIfNeeded() {
@@ -68,17 +80,39 @@ public final class DataStore: ObservableObject {
         try? context.save()
     }
     
-    public func tasks(for list: TaskListType, includeArchived: Bool = false) -> [TodoTask] {
+    public func reloadAll() {
+        let moveCompleted = UserDefaults.standard.object(forKey: "moveCompletedToBottom") as? Bool ?? true
+        
+        let fetchedToday = fetchTasksFromStore(for: .today, moveCompletedToBottom: moveCompleted)
+        let fetchedNext = fetchTasksFromStore(for: .next, moveCompletedToBottom: moveCompleted)
+        let fetchedSomeday = fetchTasksFromStore(for: .someday, moveCompletedToBottom: moveCompleted)
+        
+        self.todayTasks = fetchedToday
+        self.nextTasks = fetchedNext
+        self.somedayTasks = fetchedSomeday
+        self.todayTotalCount = fetchedToday.count
+        self.todayRemainingCount = fetchedToday.filter { $0.status != .completed }.count
+        
+        let archiveDesc = FetchDescriptor<TodoTask>(
+            predicate: #Predicate<TodoTask> { task in
+                task.isArchived || task.rawStatus == 2
+            },
+            sortBy: [SortDescriptor(\.completionDate, order: .reverse)]
+        )
+        self.archivedTasks = (try? context.fetch(archiveDesc)) ?? []
+    }
+    
+    private func fetchTasksFromStore(for list: TaskListType, moveCompletedToBottom: Bool) -> [TodoTask] {
         let raw = list.rawValue
         let predicate = #Predicate<TodoTask> { task in
-            task.rawList == raw && (includeArchived || !task.isArchived)
+            task.rawList == raw && !task.isArchived
         }
         var descriptor = FetchDescriptor<TodoTask>(predicate: predicate)
         descriptor.sortBy = [SortDescriptor(\.orderIndex, order: .forward)]
         
         var listTasks = (try? context.fetch(descriptor)) ?? []
         
-        if AppSettings.shared.moveCompletedToBottom {
+        if moveCompletedToBottom {
             listTasks.sort { a, b in
                 if (a.status == .completed) == (b.status == .completed) {
                     return a.orderIndex < b.orderIndex
@@ -89,7 +123,27 @@ public final class DataStore: ObservableObject {
         return listTasks
     }
     
+    public func tasks(for list: TaskListType, includeArchived: Bool = false) -> [TodoTask] {
+        if !includeArchived {
+            switch list {
+            case .today: return todayTasks
+            case .next: return nextTasks
+            case .someday: return somedayTasks
+            }
+        }
+        let raw = list.rawValue
+        let predicate = #Predicate<TodoTask> { task in
+            task.rawList == raw
+        }
+        var descriptor = FetchDescriptor<TodoTask>(predicate: predicate)
+        descriptor.sortBy = [SortDescriptor(\.orderIndex, order: .forward)]
+        return (try? context.fetch(descriptor)) ?? []
+    }
+    
     public func task(with id: UUID) -> TodoTask? {
+        if let found = (todayTasks + nextTasks + somedayTasks).first(where: { $0.id == id }) {
+            return found
+        }
         let descriptor = FetchDescriptor<TodoTask>(predicate: #Predicate { $0.id == id })
         return try? context.fetch(descriptor).first
     }
@@ -119,7 +173,7 @@ public final class DataStore: ObservableObject {
         }
         
         SoundManager.shared.play(.button)
-        refreshTrigger = UUID()
+        reloadAll()
     }
     
     public func toggleTaskStatus(_ task: TodoTask) {
@@ -144,7 +198,7 @@ public final class DataStore: ObservableObject {
             SoundManager.shared.play(.button)
         }
         
-        refreshTrigger = UUID()
+        reloadAll()
     }
     
     public func moveTask(_ task: TodoTask, to list: TaskListType) {
@@ -157,7 +211,7 @@ public final class DataStore: ObservableObject {
         task.orderIndex = order
         try? context.save()
         SoundManager.shared.play(.button)
-        refreshTrigger = UUID()
+        reloadAll()
     }
     
     /// Reorders `draggedTask` directly before `targetTask` (moving across lists if needed).
@@ -179,7 +233,7 @@ public final class DataStore: ObservableObject {
         
         try? context.save()
         SoundManager.shared.play(.button)
-        refreshTrigger = UUID()
+        reloadAll()
     }
     
     public func deleteTask(_ task: TodoTask) {
@@ -188,7 +242,7 @@ public final class DataStore: ObservableObject {
         context.delete(task)
         try? context.save()
         SoundManager.shared.play(.deleted)
-        refreshTrigger = UUID()
+        reloadAll()
     }
     
     public func deleteTasks(_ tasksToDelete: [TodoTask]) {
@@ -202,7 +256,7 @@ public final class DataStore: ObservableObject {
         }
         try? context.save()
         SoundManager.shared.play(tasksToDelete.count > 1 ? .allDeleted : .deleted)
-        refreshTrigger = UUID()
+        reloadAll()
     }
     
     public func moveTasks(_ tasksToMove: [TodoTask], to list: TaskListType) {
@@ -220,7 +274,7 @@ public final class DataStore: ObservableObject {
         }
         try? context.save()
         SoundManager.shared.play(.button)
-        refreshTrigger = UUID()
+        reloadAll()
     }
     
     public func setStatus(_ status: TaskStatus, for targetTasks: [TodoTask]) {
@@ -245,7 +299,7 @@ public final class DataStore: ObservableObject {
         case .incomplete:
             SoundManager.shared.play(.button)
         }
-        refreshTrigger = UUID()
+        reloadAll()
     }
     
     public func clearCompleted(in list: TaskListType) {
@@ -256,6 +310,6 @@ public final class DataStore: ObservableObject {
         }
         try? context.save()
         SoundManager.shared.play(.allDeleted)
-        refreshTrigger = UUID()
+        reloadAll()
     }
 }

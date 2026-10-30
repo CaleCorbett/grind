@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct TaskRowView: View {
-    @Bindable var task: TodoTask
+    let task: TodoTask
     let isSelected: Bool
     let isExpanded: Bool
     let onSelect: () -> Void
@@ -307,8 +307,11 @@ public struct TaskRowView: View {
                 .lineLimit(2...6)
                 .focused($focusedField, equals: .notes)
                 .onChange(of: draftNotes) { _, newValue in
+                    guard isExpanded else { return }
                     let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                    task.notes = trimmed.isEmpty ? nil : newValue
+                    let normalized: String? = trimmed.isEmpty ? nil : newValue
+                    guard task.notes != normalized else { return }
+                    task.notes = normalized
                     try? DataStore.shared.context.save()
                 }
             
@@ -446,13 +449,22 @@ public struct TaskRowView: View {
     }
     
     private func commitInlineEdits() {
+        var didChange = false
         let cleanTitle = draftTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         if !cleanTitle.isEmpty && cleanTitle != task.title {
             task.title = cleanTitle
+            didChange = true
         }
         let cleanNotes = draftNotes.trimmingCharacters(in: .whitespacesAndNewlines)
-        task.notes = cleanNotes.isEmpty ? nil : draftNotes
-        try? DataStore.shared.context.save()
+        let normalizedNotes: String? = cleanNotes.isEmpty ? nil : draftNotes
+        if task.notes != normalizedNotes {
+            task.notes = normalizedNotes
+            didChange = true
+        }
+        if didChange {
+            try? DataStore.shared.context.save()
+            DataStore.shared.reloadAll()
+        }
     }
     
     private func setQuickReminder(hour: Int, dayOffset: Int) {

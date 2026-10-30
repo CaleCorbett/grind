@@ -11,6 +11,17 @@ struct GrindApp: App {
         FontManager.shared.registerCustomFonts()
     }
     
+    private var menuBarInsertedBinding: Binding<Bool> {
+        Binding(
+            get: { settings.showInMenuBar },
+            set: { newValue in
+                if settings.showInMenuBar != newValue {
+                    settings.showInMenuBar = newValue
+                }
+            }
+        )
+    }
+    
     var body: some Scene {
         // Main Application Window
         WindowGroup {
@@ -28,7 +39,7 @@ struct GrindApp: App {
         }
         
         // macOS Menu Bar Extra
-        MenuBarExtra("Grind", systemImage: menuBarSystemImage, isInserted: $settings.showInMenuBar) {
+        MenuBarExtra("Grind", systemImage: menuBarSystemImage, isInserted: menuBarInsertedBinding) {
             MenuBarTodayView()
                 .modelContainer(DataStore.shared.container)
         }
@@ -36,14 +47,12 @@ struct GrindApp: App {
     }
     
     private var menuBarSystemImage: String {
-        _ = store.refreshTrigger
-        let today = store.tasks(for: .today)
         let count: Int
         switch settings.menuBarBadge {
         case "total":
-            count = today.count
+            count = store.todayTotalCount
         case "remaining":
-            count = today.filter { $0.status != .completed }.count
+            count = store.todayRemainingCount
         default:
             count = 0
         }

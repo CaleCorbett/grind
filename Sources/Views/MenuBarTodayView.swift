@@ -154,7 +154,6 @@ public struct MenuBarTodayView: View {
     }
     
     private var todayTasks: [TodoTask] {
-        _ = store.refreshTrigger
-        return store.tasks(for: .today)
+        store.todayTasks
     }
 }

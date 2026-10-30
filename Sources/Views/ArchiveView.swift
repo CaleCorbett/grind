@@ -117,14 +117,7 @@ public struct ArchiveView: View {
     }
     
     private var archivedTasks: [TodoTask] {
-        _ = store.refreshTrigger
-        let descriptor = FetchDescriptor<TodoTask>(
-            predicate: #Predicate<TodoTask> { task in
-                task.isArchived || task.rawStatus == 2
-            },
-            sortBy: [SortDescriptor(\.completionDate, order: .reverse)]
-        )
-        let list = (try? store.context.fetch(descriptor)) ?? []
+        let list = store.archivedTasks
         if searchText.isEmpty {
             return list
         }
