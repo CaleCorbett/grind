@@ -6,17 +6,47 @@ public struct MenuBarTodayView: View {
     
     public init() {}
     
+    private var completedCount: Int {
+        todayTasks.filter { $0.status == .completed }.count
+    }
+    
+    private var completionFraction: Double {
+        guard !todayTasks.isEmpty else { return 0 }
+        return Double(completedCount) / Double(todayTasks.count)
+    }
+    
     public var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             // Header
-            HStack {
+            HStack(spacing: 8) {
                 Text("Today")
                     .font(.geist(.bold, size: 15))
                     .foregroundColor(GrindColors.primary)
+                
                 Spacer()
-                Text("\(todayTasks.count) tasks")
-                    .font(.geist(.regular, size: 12))
-                    .foregroundColor(GrindColors.secondary)
+                
+                HStack(spacing: 5) {
+                    if !todayTasks.isEmpty {
+                        ZStack {
+                            Circle()
+                                .stroke(GrindColors.primary.opacity(0.16), lineWidth: 1.8)
+                                .frame(width: 10, height: 10)
+                            Circle()
+                                .trim(from: 0, to: completionFraction)
+                                .stroke(GrindColors.primary, style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
+                                .rotationEffect(.degrees(-90))
+                                .frame(width: 10, height: 10)
+                                .animation(GrindTheme.easeSpring, value: completionFraction)
+                        }
+                    }
+                    Text("\(completedCount)/\(todayTasks.count)")
+                        .font(.geist(.mono, size: 11))
+                        .foregroundColor(GrindColors.secondary)
+                }
+                .padding(.horizontal, 7)
+                .padding(.vertical, 2)
+                .background(GrindColors.hair)
+                .clipShape(Capsule())
             }
             .padding(.horizontal, 14)
             .padding(.top, 12)
@@ -40,15 +70,25 @@ public struct MenuBarTodayView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 4) {
                         ForEach(todayTasks) { task in
-                            HStack(spacing: 8) {
+                            HStack(spacing: 9) {
                                 StatusToggleView(status: task.status) {
                                     store.toggleTaskStatus(task)
                                 }
                                 Text(task.title)
-                                    .font(.geist(.regular, size: 13))
+                                    .font(.geist(.medium, size: 13))
                                     .foregroundColor(task.status == .completed ? GrindColors.secondary : GrindColors.primary)
-                                    .strikethrough(task.status == .completed)
                                     .lineLimit(1)
+                                    .overlay(alignment: .leading) {
+                                        GeometryReader { geo in
+                                            Rectangle()
+                                                .fill(GrindColors.secondary)
+                                                .frame(width: geo.size.width, height: 1.2)
+                                                .offset(y: geo.size.height * 0.52)
+                                                .scaleEffect(x: task.status == .completed ? 1.0 : 0.0, y: 1.0, anchor: .leading)
+                                                .animation(GrindTheme.easeSpring, value: task.status == .completed)
+                                        }
+                                        .allowsHitTesting(false)
+                                    }
                                 Spacer()
                             }
                             .padding(.horizontal, 10)
@@ -62,10 +102,10 @@ public struct MenuBarTodayView: View {
             Divider()
                 .background(GrindColors.hair)
             
-            // Inline Add
+            // Inline Add with Smart Parsing
             HStack(spacing: 6) {
                 Image(systemName: "plus")
-                    .font(.system(size: 11))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(GrindColors.secondary)
                 TextField("Add to Today...", text: $quickText)
                     .textFieldStyle(.plain)
@@ -73,7 +113,9 @@ public struct MenuBarTodayView: View {
                     .onSubmit {
                         let trimmed = quickText.trimmingCharacters(in: .whitespacesAndNewlines)
                         if !trimmed.isEmpty {
-                            store.addTask(title: trimmed, to: .today)
+                            let parsed = QuickAddParser.parse(trimmed)
+                            let title = parsed.cleanTitle.isEmpty ? trimmed : parsed.cleanTitle
+                            store.addTask(title: title, to: .today, reminderDate: parsed.reminderDate)
                             quickText = ""
                         }
                     }
@@ -87,7 +129,7 @@ public struct MenuBarTodayView: View {
             HStack {
                 Button("Open Grind") {
                     NSApp.activate(ignoringOtherApps: true)
-                    if let window = NSApp.windows.first(where: { $0.title.contains("Grind") }) {
+                    if let window = NSApp.windows.first {
                         window.makeKeyAndOrderFront(nil)
                     }
                 }
@@ -107,7 +149,7 @@ public struct MenuBarTodayView: View {
             .padding(.horizontal, 14)
             .padding(.bottom, 12)
         }
-        .frame(width: 280)
+        .frame(width: 290)
         .background(GrindColors.cardToday)
     }
     

@@ -17,11 +17,6 @@ struct GrindApp: App {
             MainView()
                 .modelContainer(DataStore.shared.container)
                 .frame(minWidth: 880, minHeight: 560)
-                .onReceive(hotKey.$shouldOpenQuickAdd) { shouldOpen in
-                    if shouldOpen {
-                        hotKey.shouldOpenQuickAdd = false
-                    }
-                }
         }
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unified(showsTitle: false))
@@ -33,7 +28,7 @@ struct GrindApp: App {
         }
         
         // macOS Menu Bar Extra
-        MenuBarExtra("Grind", systemImage: menuBarSystemImage) {
+        MenuBarExtra("Grind", systemImage: menuBarSystemImage, isInserted: $settings.showInMenuBar) {
             MenuBarTodayView()
                 .modelContainer(DataStore.shared.container)
         }
@@ -41,12 +36,23 @@ struct GrindApp: App {
     }
     
     private var menuBarSystemImage: String {
-        let remaining = store.tasks(for: .today).filter { $0.status != .completed }.count
-        if settings.menuBarBadge == "none" || remaining == 0 {
+        _ = store.refreshTrigger
+        let today = store.tasks(for: .today)
+        let count: Int
+        switch settings.menuBarBadge {
+        case "total":
+            count = today.count
+        case "remaining":
+            count = today.filter { $0.status != .completed }.count
+        default:
+            count = 0
+        }
+        
+        if settings.menuBarBadge == "none" || count == 0 {
             return "checkmark.square"
         }
-        if remaining <= 50 {
-            return "\(remaining).circle"
+        if count <= 50 {
+            return "\(count).circle"
         }
         return "checkmark.circle.fill"
     }

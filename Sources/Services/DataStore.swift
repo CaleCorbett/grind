@@ -126,6 +126,9 @@ public final class DataStore: ObservableObject {
         let prev = task.status
         let next = prev.nextStatus(allowInProgress: AppSettings.shared.allowInProgress)
         task.status = next
+        if next == .completed && AppSettings.shared.archiveImmediately {
+            task.isArchived = true
+        }
         try? context.save()
         
         switch next {
@@ -146,7 +149,34 @@ public final class DataStore: ObservableObject {
     
     public func moveTask(_ task: TodoTask, to list: TaskListType) {
         guard task.list != list else { return }
+        let existing = tasks(for: list)
+        let order = (AppSettings.shared.addTaskPosition == "top")
+            ? (existing.map(\.orderIndex).min() ?? 0) - 1
+            : (existing.map(\.orderIndex).max() ?? 0) + 1
         task.list = list
+        task.orderIndex = order
+        try? context.save()
+        SoundManager.shared.play(.button)
+        refreshTrigger = UUID()
+    }
+    
+    /// Reorders `draggedTask` directly before `targetTask` (moving across lists if needed).
+    public func reorderTask(_ draggedTask: TodoTask, before targetTask: TodoTask) {
+        guard draggedTask.id != targetTask.id else { return }
+        let destinationList = targetTask.list
+        draggedTask.list = destinationList
+        
+        var listItems = tasks(for: destinationList).filter { $0.id != draggedTask.id }
+        if let targetIdx = listItems.firstIndex(where: { $0.id == targetTask.id }) {
+            listItems.insert(draggedTask, at: targetIdx)
+        } else {
+            listItems.append(draggedTask)
+        }
+        
+        for (idx, item) in listItems.enumerated() {
+            item.orderIndex = idx
+        }
+        
         try? context.save()
         SoundManager.shared.play(.button)
         refreshTrigger = UUID()
@@ -158,6 +188,63 @@ public final class DataStore: ObservableObject {
         context.delete(task)
         try? context.save()
         SoundManager.shared.play(.deleted)
+        refreshTrigger = UUID()
+    }
+    
+    public func deleteTasks(_ tasksToDelete: [TodoTask]) {
+        guard !tasksToDelete.isEmpty else { return }
+        for task in tasksToDelete {
+            ReminderService.shared.cancelReminder(for: task)
+        }
+        UndoToastManager.shared.recordDeletion(of: tasksToDelete)
+        for task in tasksToDelete {
+            context.delete(task)
+        }
+        try? context.save()
+        SoundManager.shared.play(tasksToDelete.count > 1 ? .allDeleted : .deleted)
+        refreshTrigger = UUID()
+    }
+    
+    public func moveTasks(_ tasksToMove: [TodoTask], to list: TaskListType) {
+        let valid = tasksToMove.filter { $0.list != list }
+        guard !valid.isEmpty else { return }
+        let existing = tasks(for: list)
+        var nextOrder = (AppSettings.shared.addTaskPosition == "top")
+            ? (existing.map(\.orderIndex).min() ?? 0) - valid.count
+            : (existing.map(\.orderIndex).max() ?? 0) + 1
+        
+        for task in valid {
+            task.list = list
+            task.orderIndex = nextOrder
+            nextOrder += 1
+        }
+        try? context.save()
+        SoundManager.shared.play(.button)
+        refreshTrigger = UUID()
+    }
+    
+    public func setStatus(_ status: TaskStatus, for targetTasks: [TodoTask]) {
+        guard !targetTasks.isEmpty else { return }
+        for task in targetTasks {
+            task.status = status
+            if status == .completed {
+                ReminderService.shared.cancelReminder(for: task)
+                if AppSettings.shared.archiveImmediately {
+                    task.isArchived = true
+                }
+            } else if status == .incomplete, task.reminderDate != nil {
+                ReminderService.shared.scheduleReminder(for: task)
+            }
+        }
+        try? context.save()
+        switch status {
+        case .completed:
+            SoundManager.shared.play(.completed)
+        case .inProgress:
+            SoundManager.shared.play(.inProgress)
+        case .incomplete:
+            SoundManager.shared.play(.button)
+        }
         refreshTrigger = UUID()
     }
     

@@ -3,13 +3,14 @@ import AppKit
 
 public struct GrindTheme {
     public static let cardRadius: CGFloat = 16
-    public static let rowRadius: CGFloat = 8
+    public static let rowRadius: CGFloat = 10
     public static let btnRadius: CGFloat = 10
     public static let checkboxSize: CGFloat = 20
-    public static let checkboxRadius: CGFloat = 8
+    public static let checkboxRadius: CGFloat = 7
 
-    public static let easeSpring = Animation.spring(response: 0.35, dampingFraction: 0.86)
-    public static let snapSpring = Animation.spring(response: 0.25, dampingFraction: 0.70)
+    public static let easeSpring = Animation.spring(response: 0.34, dampingFraction: 0.84)
+    public static let snapSpring = Animation.spring(response: 0.24, dampingFraction: 0.72)
+    public static let expandSpring = Animation.spring(response: 0.38, dampingFraction: 0.82)
 }
 
 public enum GeistWeight {
@@ -43,5 +44,35 @@ public enum GeistWeight {
 public extension Font {
     static func geist(_ weight: GeistWeight = .regular, size: CGFloat) -> Font {
         .custom(weight.fontName, size: size)
+    }
+}
+
+/// Linear / Raycast style monospace keycap pill
+public struct KeycapBadge: View {
+    public let text: String
+    public var inverted: Bool = false
+    
+    public init(_ text: String, inverted: Bool = false) {
+        self.text = text
+        self.inverted = inverted
+    }
+    
+    public var body: some View {
+        Text(text)
+            .font(.geist(.mono, size: 10))
+            .foregroundColor(inverted ? GrindColors.primaryInverted.opacity(0.85) : GrindColors.secondary)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill(inverted ? GrindColors.primaryInverted.opacity(0.16) : GrindColors.hair)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .strokeBorder(
+                        inverted ? GrindColors.primaryInverted.opacity(0.22) : GrindColors.cardBorder,
+                        lineWidth: 0.75
+                    )
+            )
     }
 }

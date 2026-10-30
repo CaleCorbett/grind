@@ -8,39 +8,63 @@ public struct ToastView: View {
     public var body: some View {
         if let message = manager.currentToastMessage {
             HStack(spacing: 12) {
+                Image(systemName: manager.canUndo ? "trash.slash.fill" : "checkmark.circle.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(GrindColors.primaryInverted.opacity(0.85))
+                
                 Text(message)
                     .font(.geist(.medium, size: 13))
                     .foregroundColor(GrindColors.primaryInverted)
+                    .lineLimit(1)
                 
                 if manager.canUndo {
                     Button(action: {
                         manager.undo()
                     }) {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 5) {
                             Text("Undo")
-                                .font(.geist(.bold, size: 13))
-                            Text("⌘Z")
-                                .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                                .opacity(0.8)
+                                .font(.geist(.semiBold, size: 12))
+                                .foregroundColor(GrindColors.primaryInverted)
+                            KeycapBadge("⌘Z", inverted: true)
                         }
-                        .foregroundColor(GrindColors.primaryInverted)
-                        .padding(.horizontal, 8)
+                        .padding(.leading, 8)
+                        .padding(.trailing, 5)
                         .padding(.vertical, 3)
-                        .background(GrindColors.primaryInverted.opacity(0.2))
-                        .cornerRadius(5)
+                        .background(GrindColors.primaryInverted.opacity(0.16))
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                } else if let targetList = manager.targetListJump {
+                    Button(action: {
+                        manager.requestedFocusList = targetList
+                        withAnimation(GrindTheme.easeSpring) {
+                            manager.currentToastMessage = nil
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Text("View \(targetList.title)")
+                                .font(.geist(.semiBold, size: 12))
+                                .foregroundColor(GrindColors.primaryInverted)
+                            KeycapBadge(targetList.shortcutDisplay, inverted: true)
+                        }
+                        .padding(.leading, 8)
+                        .padding(.trailing, 5)
+                        .padding(.vertical, 3)
+                        .background(GrindColors.primaryInverted.opacity(0.16))
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.vertical, 9)
             .background(
                 Capsule()
                     .fill(GrindColors.primary)
-                    .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+                    .shadow(color: Color.black.opacity(0.28), radius: 16, x: 0, y: 8)
             )
-            .transition(.move(edge: .bottom).combined(with: .opacity))
-            .padding(.bottom, 24)
+            .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.94)))
+            .padding(.bottom, 38)
         }
     }
 }

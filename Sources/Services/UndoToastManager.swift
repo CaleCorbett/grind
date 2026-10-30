@@ -17,62 +17,92 @@ public final class UndoToastManager: ObservableObject {
     
     @Published public var currentToastMessage: String? = nil
     @Published public var canUndo: Bool = false
+    @Published public var targetListJump: TaskListType? = nil
+    @Published public var requestedFocusList: TaskListType? = nil
     
-    private var lastDeleted: DeletedTaskSnapshot? = nil
+    private var lastDeletedBatch: [DeletedTaskSnapshot] = []
     private var dismissTimer: Timer?
     
     private init() {}
     
     public func recordDeletion(of task: TodoTask) {
-        lastDeleted = DeletedTaskSnapshot(
-            id: task.id,
-            title: task.title,
-            list: task.list,
-            status: task.status,
-            notes: task.notes,
-            reminderDate: task.reminderDate,
-            orderIndex: task.orderIndex
-        )
+        recordDeletion(of: [task])
+    }
+    
+    public func recordDeletion(of tasks: [TodoTask]) {
+        guard !tasks.isEmpty else { return }
+        lastDeletedBatch = tasks.map { task in
+            DeletedTaskSnapshot(
+                id: task.id,
+                title: task.title,
+                list: task.list,
+                status: task.status,
+                notes: task.notes,
+                reminderDate: task.reminderDate,
+                orderIndex: task.orderIndex
+            )
+        }
         
-        canUndo = true
-        currentToastMessage = "To-do deleted."
+        withAnimation(GrindTheme.snapSpring) {
+            canUndo = true
+            targetListJump = nil
+            if tasks.count == 1, let first = tasks.first {
+                currentToastMessage = "Deleted “\(first.title)”"
+            } else {
+                currentToastMessage = "Deleted \(tasks.count) to-dos"
+            }
+        }
         
+        scheduleDismiss(after: 5.0)
+    }
+    
+    public func showInfo(_ message: String, targetList: TaskListType? = nil) {
+        withAnimation(GrindTheme.snapSpring) {
+            canUndo = false
+            targetListJump = targetList
+            currentToastMessage = message
+        }
+        scheduleDismiss(after: 3.2)
+    }
+    
+    private func scheduleDismiss(after seconds: TimeInterval) {
         dismissTimer?.invalidate()
-        dismissTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
+        dismissTimer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
-                withAnimation(.easeOut(duration: 0.3)) {
+                withAnimation(GrindTheme.easeSpring) {
                     self?.currentToastMessage = nil
+                    self?.targetListJump = nil
                 }
             }
         }
     }
     
     public func undo() {
-        guard let snapshot = lastDeleted else { return }
+        guard !lastDeletedBatch.isEmpty else { return }
         
-        let restored = TodoTask(
-            id: snapshot.id,
-            title: snapshot.title,
-            list: snapshot.list,
-            status: snapshot.status,
-            notes: snapshot.notes,
-            reminderDate: snapshot.reminderDate,
-            orderIndex: snapshot.orderIndex
-        )
-        
-        DataStore.shared.context.insert(restored)
-        try? DataStore.shared.context.save()
-        DataStore.shared.refreshTrigger = UUID()
-        
-        if restored.reminderDate != nil {
-            ReminderService.shared.scheduleReminder(for: restored)
+        for snapshot in lastDeletedBatch {
+            let restored = TodoTask(
+                id: snapshot.id,
+                title: snapshot.title,
+                list: snapshot.list,
+                status: snapshot.status,
+                notes: snapshot.notes,
+                reminderDate: snapshot.reminderDate,
+                orderIndex: snapshot.orderIndex
+            )
+            DataStore.shared.context.insert(restored)
+            if restored.reminderDate != nil {
+                ReminderService.shared.scheduleReminder(for: restored)
+            }
         }
         
+        try? DataStore.shared.context.save()
+        DataStore.shared.refreshTrigger = UUID()
         SoundManager.shared.play(.notification)
         
-        lastDeleted = nil
+        lastDeletedBatch = []
         canUndo = false
-        withAnimation(.easeOut(duration: 0.2)) {
+        withAnimation(GrindTheme.easeSpring) {
             currentToastMessage = nil
         }
     }
