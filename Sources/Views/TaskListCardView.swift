@@ -116,7 +116,7 @@ public struct TaskListCardView: View {
                 emptyStateView
             } else {
                 ScrollView(.vertical, showsIndicators: false) {
-                    LazyVStack(spacing: 3) {
+                    LazyVStack(spacing: 6) {
                         ForEach(tasks) { task in
                             TaskRowView(
                                 task: task,
@@ -154,7 +154,8 @@ public struct TaskListCardView: View {
                             .draggable(task.id.uuidString)
                         }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 2)
                 }
             }
             
@@ -166,7 +167,7 @@ public struct TaskListCardView: View {
             // Inline Quick-Add Footer
             inlineInputBar
         }
-        .padding(16)
+        .padding(20)
         .background(GrindColors.cardBackground(for: listType))
         .clipShape(RoundedRectangle(cornerRadius: GrindTheme.cardRadius, style: .continuous))
         .overlay(
@@ -388,7 +389,7 @@ public struct TaskListCardView: View {
                 .frame(width: 26, height: 26)
             }
         }
-        .padding(.bottom, 12)
+        .padding(.bottom, 14)
     }
     
     private func toggleMarkAllCompleteInGroup() {
@@ -602,7 +603,8 @@ public struct TaskListCardView: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(.top, 10)
+        .padding(.top, 12)
+        .padding(.bottom, 2)
         .animation(GrindTheme.snapSpring, value: inlineParsed.reminderDate != nil)
     }
     

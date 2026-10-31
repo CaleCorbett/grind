@@ -2,10 +2,10 @@ import SwiftUI
 import AppKit
 
 public struct GrindTheme {
-    public static let cardRadius: CGFloat = 16
-    public static let rowRadius: CGFloat = 10
+    public static let cardRadius: CGFloat = 18
+    public static let rowRadius: CGFloat = 11
     public static let btnRadius: CGFloat = 10
-    public static let checkboxSize: CGFloat = 20
+    public static let checkboxSize: CGFloat = 21
     public static let checkboxRadius: CGFloat = 7
 
     public static let easeSpring = Animation.spring(response: 0.34, dampingFraction: 0.84)

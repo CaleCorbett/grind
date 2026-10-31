@@ -39,19 +39,19 @@ public struct MainView: View {
             VStack(spacing: 0) {
                 // Main Header Bar
                 headerBar
-                    .padding(.horizontal, 24)
-                    .padding(.top, 16)
-                    .padding(.bottom, 14)
+                    .padding(.horizontal, 28)
+                    .padding(.top, 20)
+                    .padding(.bottom, 18)
                 
                 // The 3 Signature Lists (or Single Focused Card)
                 GeometryReader { geo in
                     let isSingleFocus = (focusedList != nil)
                     let cardWidth = isSingleFocus
-                        ? min(660, max(360, geo.size.width - 64))
-                        : max(280, (geo.size.width - 48 - 32) / 3)
+                        ? min(680, max(380, geo.size.width - 64))
+                        : max(290, (geo.size.width - 56 - 36) / 3)
                     
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(alignment: .top, spacing: 16) {
+                        HStack(alignment: .top, spacing: 18) {
                             if isSingleFocus {
                                 Spacer(minLength: 0)
                             }
@@ -134,16 +134,16 @@ public struct MainView: View {
                                 Spacer(minLength: 0)
                             }
                         }
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 8)
+                        .padding(.horizontal, 28)
+                        .padding(.bottom, 14)
                         .frame(minWidth: geo.size.width, minHeight: geo.size.height)
                     }
                 }
                 
                 // Subtle Keyboard Command Legend Footer (Godspeed / Linear style)
                 keyboardLegendFooter
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 10)
+                    .padding(.horizontal, 28)
+                    .padding(.bottom, 12)
             }
             
             // Floating Quick-Add HUD Overlay
