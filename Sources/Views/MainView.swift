@@ -352,59 +352,6 @@ public struct MainView: View {
             
             Spacer()
             
-            // Focus Mode Switcher Pill Bar (All / Today ⌘1 / Next ⌘2 / Someday ⌘3)
-            HStack(spacing: 4) {
-                Button(action: {
-                    withAnimation(GrindTheme.easeSpring) {
-                        focusedList = nil
-                    }
-                }) {
-                    HStack(spacing: 5) {
-                        Image(systemName: "rectangle.split.3x1")
-                            .font(.system(size: 11, weight: .medium))
-                        Text("Board")
-                            .font(.geist(.medium, size: 12))
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(focusedList == nil ? GrindColors.cardToday : Color.clear)
-                    .foregroundColor(focusedList == nil ? GrindColors.primary : GrindColors.secondary)
-                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-                    .shadow(color: Color.black.opacity(focusedList == nil ? 0.06 : 0), radius: 3, x: 0, y: 1)
-                }
-                .buttonStyle(.plain)
-                
-                ForEach(TaskListType.allCases) { list in
-                    let isFocused = (focusedList == list)
-                    Button(action: {
-                        withAnimation(GrindTheme.easeSpring) {
-                            focusedList = isFocused ? nil : list
-                            activeList = list
-                        }
-                    }) {
-                        HStack(spacing: 5) {
-                            Text(list.title)
-                                .font(.geist(.medium, size: 12))
-                            Text("⌘\(list.shortcutNumber)")
-                                .font(.geist(.mono, size: 10))
-                                .foregroundColor(GrindColors.secondary.opacity(0.8))
-                        }
-                        .padding(.horizontal, 9)
-                        .padding(.vertical, 5)
-                        .background(isFocused ? GrindColors.cardToday : Color.clear)
-                        .foregroundColor(isFocused ? GrindColors.primary : GrindColors.secondary)
-                        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-                        .shadow(color: Color.black.opacity(isFocused ? 0.06 : 0), radius: 3, x: 0, y: 1)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(3)
-            .background(GrindColors.hair)
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            
-            Spacer()
-            
             // Header Action Buttons
             HStack(spacing: 8) {
                 // Quick-Add Trigger Button with Monospace Keycap
