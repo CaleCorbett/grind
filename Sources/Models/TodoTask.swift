@@ -13,6 +13,11 @@ public final class TodoTask: Identifiable {
     public var completionDate: Date?
     public var orderIndex: Int
     public var isArchived: Bool
+    public var recurrenceRule: String?
+    public var isEvening: Bool
+    public var checklistJSON: String?
+    public var lastTouchedDate: Date?
+    public var focusSecondsLogged: Int
 
     public init(
         id: UUID = UUID(),
@@ -24,7 +29,12 @@ public final class TodoTask: Identifiable {
         creationDate: Date = Date(),
         completionDate: Date? = nil,
         orderIndex: Int = 0,
-        isArchived: Bool = false
+        isArchived: Bool = false,
+        recurrenceRule: String? = nil,
+        isEvening: Bool = false,
+        checklistJSON: String? = nil,
+        lastTouchedDate: Date? = nil,
+        focusSecondsLogged: Int = 0
     ) {
         self.id = id
         self.title = title
@@ -36,6 +46,11 @@ public final class TodoTask: Identifiable {
         self.completionDate = completionDate
         self.orderIndex = orderIndex
         self.isArchived = isArchived
+        self.recurrenceRule = recurrenceRule
+        self.isEvening = isEvening
+        self.checklistJSON = checklistJSON
+        self.lastTouchedDate = lastTouchedDate ?? creationDate
+        self.focusSecondsLogged = focusSecondsLogged
     }
 
     public var list: TaskListType {
