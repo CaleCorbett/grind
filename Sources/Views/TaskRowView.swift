@@ -57,7 +57,7 @@ public struct TaskRowView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Main Row Header
-            HStack(alignment: .center, spacing: 11) {
+            HStack(alignment: .center, spacing: 13) {
                 StatusToggleView(status: task.status, action: onToggle)
                 
                 if isExpanded {
@@ -110,8 +110,8 @@ public struct TaskRowView: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .padding(.horizontal, isExpanded ? 12 : 10)
-        .padding(.vertical, isExpanded ? 12 : 8)
+        .padding(.horizontal, isExpanded ? 14 : 12)
+        .padding(.vertical, isExpanded ? 14 : 11)
         .background(
             RoundedRectangle(cornerRadius: GrindTheme.rowRadius, style: .continuous)
                 .fill(rowBackgroundColor)

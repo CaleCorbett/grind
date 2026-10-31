@@ -2,10 +2,18 @@ import Foundation
 @preconcurrency import UserNotifications
 
 @MainActor
-public final class ReminderService {
+public final class ReminderService: NSObject, UNUserNotificationCenterDelegate {
     public static let shared = ReminderService()
     
-    private init() {}
+    public static let categoryIdentifier = "GRIND_TASK_REMINDER"
+    public static let actionComplete = "ACTION_COMPLETE"
+    public static let actionSnooze1Hour = "ACTION_SNOOZE_1H"
+    public static let actionTomorrow = "ACTION_TOMORROW"
+    
+    private override init() {
+        super.init()
+        setupNotificationCategories()
+    }
     
     /// Safely returns `UNUserNotificationCenter.current()` only when running inside a valid `.app` bundle.
     /// Calling `UNUserNotificationCenter.current()` from a bare executable (`swift run` / CLI test) throws
@@ -16,6 +24,98 @@ public final class ReminderService {
             return nil
         }
         return UNUserNotificationCenter.current()
+    }
+    
+    public func setupNotificationCategories() {
+        guard let center = notificationCenter else { return }
+        center.delegate = self
+        
+        let completeAction = UNNotificationAction(
+            identifier: Self.actionComplete,
+            title: "Mark Done",
+            options: [.authenticationRequired]
+        )
+        let snoozeAction = UNNotificationAction(
+            identifier: Self.actionSnooze1Hour,
+            title: "Snooze 1 Hour",
+            options: []
+        )
+        let tomorrowAction = UNNotificationAction(
+            identifier: Self.actionTomorrow,
+            title: "Move to Tomorrow",
+            options: []
+        )
+        
+        let category = UNNotificationCategory(
+            identifier: Self.categoryIdentifier,
+            actions: [completeAction, snoozeAction, tomorrowAction],
+            intentIdentifiers: [],
+            options: [.customDismissAction]
+        )
+        center.setNotificationCategories([category])
+    }
+    
+    // MARK: - UNUserNotificationCenterDelegate
+    public nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let identifier = response.notification.request.identifier
+        guard let uuid = UUID(uuidString: identifier) else {
+            completionHandler()
+            return
+        }
+        
+        Task { @MainActor in
+            guard let task = DataStore.shared.task(with: uuid) else {
+                completionHandler()
+                return
+            }
+            
+            switch response.actionIdentifier {
+            case Self.actionComplete:
+                task.status = .completed
+                if AppSettings.shared.archiveImmediately {
+                    task.isArchived = true
+                }
+                try? DataStore.shared.context.save()
+                DataStore.shared.reloadAll()
+                SoundManager.shared.play(.completed)
+                
+            case Self.actionSnooze1Hour:
+                let newDate = Date().addingTimeInterval(3600)
+                task.reminderDate = newDate
+                try? DataStore.shared.context.save()
+                ReminderService.shared.scheduleReminder(for: task)
+                DataStore.shared.reloadAll()
+                
+            case Self.actionTomorrow:
+                let calendar = Calendar.current
+                if let tomorrow = calendar.date(byAdding: .day, value: 1, to: Date()) {
+                    let nextDayDate = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: tomorrow) ?? tomorrow
+                    task.reminderDate = nextDayDate
+                    if task.list == .today {
+                        task.list = .next
+                    }
+                    try? DataStore.shared.context.save()
+                    ReminderService.shared.scheduleReminder(for: task)
+                    DataStore.shared.reloadAll()
+                }
+                
+            default:
+                break
+            }
+            completionHandler()
+        }
+    }
+    
+    public nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound, .badge])
     }
     
     public func requestAuthorization(completion: ((Bool) -> Void)? = nil) {
@@ -71,6 +171,7 @@ public final class ReminderService {
         content.subtitle = listTitle
         content.body = title
         content.sound = .default
+        content.categoryIdentifier = Self.categoryIdentifier
         
         let components = Calendar.current.dateComponents(
             [.year, .month, .day, .hour, .minute],
