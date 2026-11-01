@@ -64,6 +64,20 @@ public struct SettingsView: View {
             }
             
             Section("Focus & Daily Limits") {
+                HStack {
+                    Text("Today Completion Streak")
+                    Spacer()
+                    if settings.activeStreak > 0 {
+                        Text("🔥 \(settings.activeStreak) days")
+                            .font(.geist(.mono, size: 12))
+                            .foregroundColor(.orange)
+                    } else {
+                        Text("0 days")
+                            .font(.geist(.mono, size: 12))
+                            .foregroundColor(GrindColors.secondary)
+                    }
+                }
+                
                 Picker("Today Cap Soft Warning", selection: $settings.todayCapLimit) {
                     Text("Off").tag(0)
                     Text("3 to-dos (Ivy Lee / Essential)").tag(3)

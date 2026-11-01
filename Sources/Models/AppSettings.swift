@@ -112,6 +112,65 @@ public final class AppSettings: ObservableObject {
         }
     }
     
+    public var completionStreakCount: Int {
+        willSet { if newValue != completionStreakCount { objectWillChange.send() } }
+        didSet {
+            guard oldValue != completionStreakCount else { return }
+            UserDefaults.standard.set(completionStreakCount, forKey: "completionStreakCount")
+        }
+    }
+    
+    public var lastCompletedDateString: String? {
+        willSet { if newValue != lastCompletedDateString { objectWillChange.send() } }
+        didSet {
+            guard oldValue != lastCompletedDateString else { return }
+            UserDefaults.standard.set(lastCompletedDateString, forKey: "lastCompletedDateString")
+        }
+    }
+    
+    public static let streakDateFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM-dd"
+        df.timeZone = .current
+        return df
+    }()
+    
+    public var activeStreak: Int {
+        guard let lastStr = lastCompletedDateString, completionStreakCount > 0 else { return 0 }
+        let todayStr = Self.streakDateFormatter.string(from: Date())
+        if lastStr == todayStr { return completionStreakCount }
+        if let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date()) {
+            let yesterdayStr = Self.streakDateFormatter.string(from: yesterday)
+            if lastStr == yesterdayStr { return completionStreakCount }
+        }
+        return 0
+    }
+    
+    @discardableResult
+    public func recordStreakIfTodayCleared(todayTasks: [TodoTask]) -> Bool {
+        guard !todayTasks.isEmpty else { return false }
+        let remaining = todayTasks.filter { $0.status != .completed }
+        guard remaining.isEmpty else { return false }
+        
+        let todayStr = Self.streakDateFormatter.string(from: Date())
+        if lastCompletedDateString == todayStr {
+            return false
+        }
+        
+        if let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date()) {
+            let yesterdayStr = Self.streakDateFormatter.string(from: yesterday)
+            if lastCompletedDateString == yesterdayStr {
+                completionStreakCount += 1
+            } else {
+                completionStreakCount = 1
+            }
+        } else {
+            completionStreakCount = 1
+        }
+        lastCompletedDateString = todayStr
+        return true
+    }
+    
     private init() {
         let d = UserDefaults.standard
         self.soundEffectsEnabled = d.object(forKey: "soundEffectsEnabled") as? Bool ?? true
@@ -127,6 +186,8 @@ public final class AppSettings: ObservableObject {
         self.archiveImmediately = d.object(forKey: "archiveImmediately") as? Bool ?? false
         self.autoMoveRemindersToToday = d.object(forKey: "autoMoveRemindersToToday") as? Bool ?? true
         self.todayCapLimit = d.object(forKey: "todayCapLimit") as? Int ?? 5
+        self.completionStreakCount = d.integer(forKey: "completionStreakCount")
+        self.lastCompletedDateString = d.string(forKey: "lastCompletedDateString")
     }
     
     public var preferredColorScheme: ColorScheme? {

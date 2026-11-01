@@ -263,6 +263,22 @@ public struct TaskListCardView: View {
                             .textCase(.uppercase)
                             .tracking(0.5)
                         
+                        let streak = AppSettings.shared.activeStreak
+                        if streak > 0 {
+                            HStack(spacing: 3) {
+                                Image(systemName: "flame.fill")
+                                    .font(.system(size: 8.5))
+                                Text("\(streak)d streak")
+                                    .font(.geist(.mono, size: 9.5))
+                            }
+                            .foregroundColor(.orange)
+                            .padding(.horizontal, 5.5)
+                            .padding(.vertical, 1.5)
+                            .background(Color.orange.opacity(0.12))
+                            .clipShape(Capsule())
+                            .help("\(streak)-day daily completion streak!")
+                        }
+                        
                         let cap = AppSettings.shared.todayCapLimit
                         let remaining = tasks.filter { $0.status != .completed }.count
                         if cap > 0 && remaining > cap {
@@ -677,7 +693,9 @@ public struct TaskListCardView: View {
     
     private var emptyIconName: String {
         switch listType {
-        case .today: return "sun.max"
+        case .today:
+            let isClearedToday = AppSettings.shared.lastCompletedDateString == AppSettings.streakDateFormatter.string(from: Date())
+            return (AppSettings.shared.activeStreak > 0 && isClearedToday) ? "party.popper.fill" : "sun.max"
         case .next: return "calendar.badge.clock"
         case .someday: return "sparkles"
         }
@@ -685,7 +703,12 @@ public struct TaskListCardView: View {
     
     private var emptyMessage: String {
         switch listType {
-        case .today: return "Clear for today.\nAdd what needs doing."
+        case .today:
+            let isClearedToday = AppSettings.shared.lastCompletedDateString == AppSettings.streakDateFormatter.string(from: Date())
+            if AppSettings.shared.activeStreak > 0 && isClearedToday {
+                return "Today cleared!\n🔥 \(AppSettings.shared.activeStreak)-day streak"
+            }
+            return "Clear for today.\nAdd what needs doing."
         case .next: return "No upcoming tasks.\nReady for the next sprint."
         case .someday: return "No someday ideas yet.\nJot down big dreams."
         }
