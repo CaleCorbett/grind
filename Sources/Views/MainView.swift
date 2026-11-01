@@ -7,6 +7,7 @@ public struct MainView: View {
     @ObservedObject private var settings = AppSettings.shared
     @ObservedObject private var hotKey = GlobalHotKeyManager.shared
     @ObservedObject private var toastManager = UndoToastManager.shared
+    @ObservedObject private var focusFilter = FocusFilterService.shared
     
     @State private var editingTask: TodoTask? = nil
     @State private var isShowingQuickAdd: Bool = false
@@ -30,6 +31,16 @@ public struct MainView: View {
     private var visibleLists: [TaskListType] {
         if let focused = focusedList {
             return [focused]
+        }
+        if focusFilter.isFocusFilterActive {
+            if let target = focusFilter.activeFilterListName {
+                if target == "today" { return [.today] }
+                if target == "next" { return [.next] }
+                if target == "someday" { return [.someday] }
+            }
+            if focusFilter.hideSomedayActive {
+                return [.today, .next]
+            }
         }
         return TaskListType.allCases
     }
@@ -406,6 +417,30 @@ public struct MainView: View {
                         .font(.geist(.regular, size: 11))
                         .foregroundColor(GrindColors.secondary)
                 }
+            }
+            
+            if focusFilter.isFocusFilterActive {
+                HStack(spacing: 5) {
+                    Image(systemName: "moon.fill")
+                        .font(.system(size: 9))
+                    Text("Focus: \(focusFilter.activeFilterListName?.capitalized ?? "Filtered")")
+                        .font(.geist(.mono, size: 10.5))
+                    Button {
+                        withAnimation(GrindTheme.easeSpring) {
+                            focusFilter.clearFocusFilter()
+                        }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 11))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.purple.opacity(0.18))
+                .foregroundColor(.purple)
+                .clipShape(Capsule())
+                .transition(.scale.combined(with: .opacity))
             }
             
             Spacer()

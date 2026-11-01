@@ -374,6 +374,16 @@ struct SmokeTestRunner {
         check(matchingTask?.status == .inProgress || matchingTask?.status == .completed, "ToggleTaskIntent modifies task status")
         if let t = matchingTask { store.deleteTask(t) }
 
+        // macOS Focus Filter test
+        let focusFilterIntent = GrindFocusFilterIntent(focusedListName: "today", hideSomeday: true)
+        _ = try? await focusFilterIntent.perform()
+        check(FocusFilterService.shared.isFocusFilterActive, "GrindFocusFilterIntent activates focus filter")
+        check(FocusFilterService.shared.activeFilterListName == "today", "activeFilterListName is 'today'")
+        check(FocusFilterService.shared.hideSomedayActive, "hideSomedayActive is true")
+
+        FocusFilterService.shared.clearFocusFilter()
+        check(!FocusFilterService.shared.isFocusFilterActive, "clearFocusFilter resets focus filter")
+
         // Reminders & Things 3 Importer test
         let sampleThingsJSON = """
         [

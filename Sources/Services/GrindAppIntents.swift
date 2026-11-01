@@ -81,6 +81,37 @@ public struct ToggleTaskIntent: AppIntent {
     }
 }
 
+public struct GrindFocusFilterIntent: SetFocusFilterIntent {
+    public static var title: LocalizedStringResource = "Set Grind Focus Mode"
+    public static var description = IntentDescription("Filters visible to-do lists or emphasizes Today during an active macOS Focus mode.")
+    
+    @Parameter(title: "Focused List", default: "today")
+    public var focusedListName: String
+    
+    @Parameter(title: "Hide Someday Ideas", default: true)
+    public var hideSomeday: Bool
+    
+    public var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(title: "Grind Focus Filter")
+    }
+    
+    public init() {}
+    
+    public init(focusedListName: String, hideSomeday: Bool = true) {
+        self.focusedListName = focusedListName
+        self.hideSomeday = hideSomeday
+    }
+    
+    @MainActor
+    public func perform() async throws -> some IntentResult {
+        FocusFilterService.shared.applyFocusFilter(
+            focusedList: focusedListName,
+            hideSomeday: hideSomeday
+        )
+        return .result()
+    }
+}
+
 public struct GrindShortcutsProvider: AppShortcutsProvider {
     public static var appShortcuts: [AppShortcut] {
         AppShortcut(
