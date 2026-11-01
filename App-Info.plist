@@ -18,5 +18,44 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.cale.Grind</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>grind</string>
+			</array>
+		</dict>
+	</array>
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Send to Grind</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>handleSendToGrindService</string>
+			<key>NSPortName</key>
+			<string>Grind</string>
+			<key>NSSendTypes</key>
+			<array>
+				<string>NSPasteboardTypeString</string>
+				<string>public.utf8-plain-text</string>
+				<string>NSStringPboardType</string>
+			</array>
+		</dict>
+	</array>
+	<key>NSRemindersUsageDescription</key>
+	<string>Grind accesses your reminders so you can import tasks into your daily board.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Grind accesses your reminders so you can import tasks into your daily board.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Grind shows your today calendar events alongside your tasks.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Grind shows your today calendar events alongside your tasks.</string>
 </dict>
 </plist>
