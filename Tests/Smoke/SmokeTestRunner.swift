@@ -407,6 +407,14 @@ struct SmokeTestRunner {
         staleReviewHost.frame = NSRect(x: 0, y: 0, width: 580, height: 460)
         staleReviewHost.layoutSubtreeIfNeeded()
 
+        let commandPaletteHost = NSHostingView(rootView: CommandPaletteView(isPresented: .constant(true), onSelectTask: { _ in }, onSelectAction: { _ in }))
+        commandPaletteHost.frame = NSRect(x: 0, y: 0, width: 560, height: 360)
+        commandPaletteHost.layoutSubtreeIfNeeded()
+
+        let importSheetHost = NSHostingView(rootView: ImportTasksSheet())
+        importSheetHost.frame = NSRect(x: 0, y: 0, width: 540, height: 480)
+        importSheetHost.layoutSubtreeIfNeeded()
+
         if let editableTask = store.todayTasks.first {
             let editorHost = NSHostingView(rootView: TaskEditorSheet(task: editableTask))
             editorHost.frame = NSRect(x: 0, y: 0, width: 440, height: 520)
