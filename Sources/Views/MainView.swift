@@ -12,6 +12,7 @@ public struct MainView: View {
     @State private var isShowingQuickAdd: Bool = false
     @State private var isShowingArchive: Bool = false
     @State private var isShowingSettings: Bool = false
+    @State private var isShowingFreshStart: Bool = false
     
     // Focus Mode, Multi-Selection & Keyboard Navigation State
     @State private var focusedList: TaskListType? = nil
@@ -123,6 +124,9 @@ public struct MainView: View {
                                             focusedList = (focusedList == target) ? nil : target
                                             activeList = target
                                         }
+                                    },
+                                    onOpenFreshStart: {
+                                        isShowingFreshStart = true
                                     }
                                 )
                                 .frame(width: cardWidth)
@@ -173,6 +177,9 @@ public struct MainView: View {
         .sheet(isPresented: $isShowingSettings) {
             SettingsView()
         }
+        .sheet(isPresented: $isShowingFreshStart) {
+            FreshStartRitualView()
+        }
         .preferredColorScheme(settings.preferredColorScheme)
         .onReceive(hotKey.$shouldOpenQuickAdd) { shouldOpen in
             if shouldOpen {
@@ -194,6 +201,7 @@ public struct MainView: View {
         .onAppear {
             AutoMoveService.shared.performDailySweep()
             installKeyboardNavigationMonitor()
+            checkFreshStartRitual()
         }
         .onDisappear {
             if let monitor = keyMonitor {
@@ -626,5 +634,15 @@ public struct MainView: View {
         let msg = movable.count == 1 ? "Moved to \(target.title)" : "Moved \(movable.count) to \(target.title)"
         UndoToastManager.shared.showInfo(msg, targetList: target)
         return true
+    }
+    
+    private func checkFreshStartRitual() {
+        guard settings.freshStartRitualEnabled else { return }
+        let todayStr = AppSettings.streakDateFormatter.string(from: Date())
+        if settings.lastFreshStartDateString != todayStr && !store.carryoverTodayTasks.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                isShowingFreshStart = true
+            }
+        }
     }
 }

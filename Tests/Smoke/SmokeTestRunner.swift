@@ -187,6 +187,23 @@ struct SmokeTestRunner {
         check(store.todayTasks.count == 14, "clearCompleted archives 3 completed tasks from Today")
         check(store.archivedTasks.count >= 3, "archivedTasks contains archived tasks (got \(store.archivedTasks.count))")
 
+        // Fresh Start Carryover & Rollover Triage test
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date())!
+        let carryoverTask = TodoTask(
+            title: "Old Incomplete Task",
+            list: .today,
+            status: .incomplete,
+            creationDate: yesterday,
+            lastTouchedDate: yesterday
+        )
+        store.context.insert(carryoverTask)
+        try? store.context.save()
+        store.reloadAll()
+        check(store.carryoverTodayTasks.contains(where: { $0.id == carryoverTask.id }), "carryoverTodayTasks identifies task from yesterday")
+        store.keepTasksInToday([carryoverTask])
+        check(!store.carryoverTodayTasks.contains(where: { $0.id == carryoverTask.id }), "keepTasksInToday updates lastTouchedDate and clears task from carryover list")
+        store.deleteTask(carryoverTask)
+
         // ----------------------------------------------------
         // TEST 3: QuickAddParser Edge Cases & Performance Guard
         // ----------------------------------------------------
@@ -255,6 +272,10 @@ struct SmokeTestRunner {
         settingsHost.frame = NSRect(x: 0, y: 0, width: 500, height: 420)
         settingsHost.layoutSubtreeIfNeeded()
 
+        let freshStartHost = NSHostingView(rootView: FreshStartRitualView().modelContainer(store.container))
+        freshStartHost.frame = NSRect(x: 0, y: 0, width: 580, height: 460)
+        freshStartHost.layoutSubtreeIfNeeded()
+
         if let editableTask = store.todayTasks.first {
             let editorHost = NSHostingView(rootView: TaskEditorSheet(task: editableTask))
             editorHost.frame = NSRect(x: 0, y: 0, width: 440, height: 520)
@@ -298,7 +319,7 @@ struct SmokeTestRunner {
         check(idleStoreEvents == 0, "Zero post-mutation DataStore feedback loops while views are mounted (got \(idleStoreEvents))")
         check(idleSettingsEvents == 0, "Zero post-mutation AppSettings feedback loops while views are mounted (got \(idleSettingsEvents))")
 
-        _ = (idleSub1, idleSub2, mainWindow, mainHost, menuBarHost, quickAddHost, archiveHost, settingsHost)
+        _ = (idleSub1, idleSub2, mainWindow, mainHost, menuBarHost, quickAddHost, archiveHost, settingsHost, freshStartHost)
 
         // ----------------------------------------------------
         // TEST 7: GlobalHotKeyManager FloatingQuickAddNSPanel Lifecycle
