@@ -224,6 +224,25 @@ struct SmokeTestRunner {
         if let s = spawned { store.deleteTask(s) }
         store.deleteTask(recurringTask)
 
+        // Stale Someday Task & Visual Decay test
+        let oldDate = Date().addingTimeInterval(-35 * 86400) // 35 days ago
+        let staleTask = TodoTask(
+            title: "Old Dream App",
+            list: .someday,
+            status: .incomplete,
+            creationDate: oldDate,
+            lastTouchedDate: oldDate
+        )
+        store.context.insert(staleTask)
+        try? store.context.save()
+        store.reloadAll()
+        check(staleTask.isStaleSomeday, "TodoTask.isStaleSomeday returns true for 35-day-old task in Someday")
+        check(staleTask.daysUntouched >= 35, "TodoTask.daysUntouched reports >= 35 days (got \(staleTask.daysUntouched))")
+        check(store.staleSomedayTasks.contains(where: { $0.id == staleTask.id }), "store.staleSomedayTasks contains stale task")
+        store.touchTasks([staleTask])
+        check(!staleTask.isStaleSomeday, "touchTasks updates lastTouchedDate and clears stale status")
+        store.deleteTask(staleTask)
+
         // ----------------------------------------------------
         // TEST 3: QuickAddParser Edge Cases & Performance Guard
         // ----------------------------------------------------
@@ -303,6 +322,10 @@ struct SmokeTestRunner {
         freshStartHost.frame = NSRect(x: 0, y: 0, width: 580, height: 460)
         freshStartHost.layoutSubtreeIfNeeded()
 
+        let staleReviewHost = NSHostingView(rootView: StaleReviewSheet().modelContainer(store.container))
+        staleReviewHost.frame = NSRect(x: 0, y: 0, width: 580, height: 460)
+        staleReviewHost.layoutSubtreeIfNeeded()
+
         if let editableTask = store.todayTasks.first {
             let editorHost = NSHostingView(rootView: TaskEditorSheet(task: editableTask))
             editorHost.frame = NSRect(x: 0, y: 0, width: 440, height: 520)
@@ -346,7 +369,7 @@ struct SmokeTestRunner {
         check(idleStoreEvents == 0, "Zero post-mutation DataStore feedback loops while views are mounted (got \(idleStoreEvents))")
         check(idleSettingsEvents == 0, "Zero post-mutation AppSettings feedback loops while views are mounted (got \(idleSettingsEvents))")
 
-        _ = (idleSub1, idleSub2, mainWindow, mainHost, menuBarHost, quickAddHost, archiveHost, settingsHost, freshStartHost)
+        _ = (idleSub1, idleSub2, mainWindow, mainHost, menuBarHost, quickAddHost, archiveHost, settingsHost, freshStartHost, staleReviewHost)
 
         // ----------------------------------------------------
         // TEST 7: GlobalHotKeyManager FloatingQuickAddNSPanel Lifecycle

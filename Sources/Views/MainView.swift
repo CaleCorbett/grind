@@ -13,6 +13,7 @@ public struct MainView: View {
     @State private var isShowingArchive: Bool = false
     @State private var isShowingSettings: Bool = false
     @State private var isShowingFreshStart: Bool = false
+    @State private var isShowingStaleReview: Bool = false
     
     // Focus Mode, Multi-Selection & Keyboard Navigation State
     @State private var focusedList: TaskListType? = nil
@@ -133,6 +134,9 @@ public struct MainView: View {
                                     },
                                     onOpenFreshStart: {
                                         isShowingFreshStart = true
+                                    },
+                                    onOpenStaleReview: {
+                                        isShowingStaleReview = true
                                     }
                                 )
                                 .frame(width: cardWidth)
@@ -185,6 +189,9 @@ public struct MainView: View {
         }
         .sheet(isPresented: $isShowingFreshStart) {
             FreshStartRitualView()
+        }
+        .sheet(isPresented: $isShowingStaleReview) {
+            StaleReviewSheet()
         }
         .preferredColorScheme(settings.preferredColorScheme)
         .onReceive(hotKey.$shouldOpenQuickAdd) { shouldOpen in

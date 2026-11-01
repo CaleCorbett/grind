@@ -75,7 +75,8 @@ public struct TaskRowView: View {
                     // Title with animated left-to-right strikethrough line
                     Text(task.title)
                         .font(.geist(.medium, size: 15.5))
-                        .foregroundColor(isCompleted ? GrindColors.secondary : GrindColors.primary)
+                        .foregroundColor(isCompleted ? GrindColors.secondary : (task.isStaleSomeday && !isHovered ? GrindColors.secondary : GrindColors.primary))
+                        .opacity(task.isStaleSomeday && !isCompleted && !isHovered ? 0.72 : 1.0)
                         .lineLimit(2)
                         .overlay(alignment: .leading) {
                             Rectangle()
@@ -296,6 +297,22 @@ public struct TaskRowView: View {
                 .background(GrindColors.hair)
                 .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
                 .help("Repeats \(RecurrenceService.displayString(for: rule))")
+            }
+            
+            // Stale Someday Indicator Badge
+            if task.isStaleSomeday {
+                HStack(spacing: 3) {
+                    Image(systemName: "hourglass")
+                        .font(.system(size: 8.5))
+                    Text("\(task.daysUntouched)d")
+                        .font(.geist(.mono, size: 9.5))
+                }
+                .foregroundColor(GrindColors.secondary)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(GrindColors.hair.opacity(0.8))
+                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                .help("Untouched for \(task.daysUntouched) days")
             }
             
             // Monospace Reminder Badge
