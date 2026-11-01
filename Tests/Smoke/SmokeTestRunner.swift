@@ -274,6 +274,17 @@ struct SmokeTestRunner {
         let elapsedHugeMs = (CFAbsoluteTimeGetCurrent() - startHuge) * 1000.0
         check(elapsedHugeMs < 25.0 && !hugeParsed.cleanTitle.isEmpty, "16,000-char QuickAddParser input completes in \(String(format: "%.2f", elapsedHugeMs))ms (< 25ms) without hanging NSDataDetector")
 
+        // FrontmostAppCaptureService check
+        let sampleContext = CapturedContext(
+            appName: "Safari",
+            bundleID: "com.apple.Safari",
+            title: "GitHub Repository",
+            urlString: "https://github.com/CaleCorbett/grind"
+        )
+        FrontmostAppCaptureService.shared.lastCapturedContext = sampleContext
+        check(FrontmostAppCaptureService.shared.lastCapturedContext?.appName == "Safari", "FrontmostAppCaptureService holds captured context")
+        check(FrontmostAppCaptureService.shared.lastCapturedContext?.urlString == "https://github.com/CaleCorbett/grind", "Captured context retains URL")
+
         // ----------------------------------------------------
         // TEST 4: AutoMoveService Daily Sweep
         // ----------------------------------------------------

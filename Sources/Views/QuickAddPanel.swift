@@ -6,6 +6,8 @@ public struct QuickAddPanel: View {
     
     @State private var inputText: String = ""
     @State private var manualListOverride: TaskListType? = nil
+    @State private var capturedContext: CapturedContext? = nil
+    @State private var isLinkAttached: Bool = false
     @FocusState private var isFieldFocused: Bool
     
     public init(isPresented: Binding<Bool>, onDismiss: (() -> Void)? = nil) {
@@ -103,6 +105,46 @@ public struct QuickAddPanel: View {
                         Spacer()
                     }
                     .padding(.horizontal, 4)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+                
+                // Frontmost App Link Attachment / Autofill HUD
+                if let captured = capturedContext {
+                    HStack(spacing: 6) {
+                        Image(systemName: "link")
+                            .font(.system(size: 9.5))
+                            .foregroundColor(.blue)
+                        Text("From \(captured.appName):")
+                            .font(.geist(.medium, size: 11))
+                            .foregroundColor(GrindColors.secondary)
+                        Text(captured.title)
+                            .font(.geist(.regular, size: 11))
+                            .foregroundColor(GrindColors.primary)
+                            .lineLimit(1)
+                        
+                        Spacer(minLength: 4)
+                        
+                        Button(action: toggleAttachContext) {
+                            HStack(spacing: 3) {
+                                Image(systemName: isLinkAttached ? "checkmark.circle.fill" : "plus.circle")
+                                    .font(.system(size: 9.5))
+                                Text(isLinkAttached ? "Attached" : "Attach (⌘D)")
+                                    .font(.geist(.medium, size: 10.5))
+                            }
+                            .foregroundColor(isLinkAttached ? .green : GrindColors.primary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2.5)
+                            .background(GrindColors.hair)
+                            .cornerRadius(4)
+                        }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("d", modifiers: .command)
+                        .help("Attach \(captured.urlString) to this to-do's notes (⌘D)")
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(GrindColors.hair.opacity(0.35))
+                    .cornerRadius(6)
                     .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
@@ -227,6 +269,19 @@ public struct QuickAddPanel: View {
         .shadow(color: Color.black.opacity(0.26), radius: 28, x: 0, y: 14)
         .onAppear {
             isFieldFocused = true
+            if let captured = FrontmostAppCaptureService.shared.lastCapturedContext {
+                self.capturedContext = captured
+            }
+        }
+    }
+    
+    private func toggleAttachContext() {
+        guard let captured = capturedContext else { return }
+        withAnimation(GrindTheme.easeSpring) {
+            if inputText.isEmpty {
+                inputText = captured.title
+            }
+            isLinkAttached.toggle()
         }
     }
     
@@ -250,9 +305,11 @@ public struct QuickAddPanel: View {
         guard !trimmed.isEmpty else { return }
         
         let target = effectiveList
+        let notes = isLinkAttached ? capturedContext?.urlString : nil
         DataStore.shared.addTask(
             title: trimmed,
             to: target,
+            notes: notes,
             reminderDate: parsed.reminderDate,
             isEvening: parsed.isEvening,
             recurrenceRule: parsed.recurrenceRule
