@@ -225,7 +225,7 @@ struct SmokeTestRunner {
         store.deleteTask(recurringTask)
 
         // Stale Someday Task & Visual Decay test
-        let oldDate = Date().addingTimeInterval(-35 * 86400) // 35 days ago
+        let oldDate = Calendar.current.date(byAdding: .day, value: -35, to: Date()) ?? Date().addingTimeInterval(-36 * 86400) // 35 days ago
         let staleTask = TodoTask(
             title: "Old Dream App",
             list: .someday,

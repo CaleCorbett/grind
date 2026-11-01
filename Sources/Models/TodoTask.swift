@@ -73,7 +73,7 @@ public final class TodoTask: Identifiable {
     public var isStaleSomeday: Bool {
         guard list == .someday, status != .completed, !isArchived else { return false }
         let touchDate = lastTouchedDate ?? creationDate
-        let staleThreshold = Date().addingTimeInterval(-30 * 86400)
+        let staleThreshold = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date().addingTimeInterval(-30 * 86400)
         return touchDate < staleThreshold
     }
     
