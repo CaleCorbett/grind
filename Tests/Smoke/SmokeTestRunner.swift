@@ -158,6 +158,23 @@ struct SmokeTestRunner {
         let deletedIDs = Set(toDelete.map(\.id))
         store.deleteTasks(toDelete)
         check(store.somedayTasks.count == 6, "Batch deleteTasks removes 4 tasks from Someday (got \(store.somedayTasks.count))")
+
+        // Streak celebration & daily streak tracker test
+        let origStreak = settings.completionStreakCount
+        let origLastCompleted = settings.lastCompletedDateString
+        settings.completionStreakCount = 0
+        settings.lastCompletedDateString = nil
+        let testTodayTasks = [
+            TodoTask(title: "Streak Task A", list: .today, status: .completed),
+            TodoTask(title: "Streak Task B", list: .today, status: .completed)
+        ]
+        let streakCleared = settings.recordStreakIfTodayCleared(todayTasks: testTodayTasks)
+        check(streakCleared && settings.completionStreakCount == 1, "recordStreakIfTodayCleared increments streak to 1 when today tasks are completed")
+        check(settings.activeStreak == 1, "activeStreak reports 1 for current day")
+        let secondStreakCheck = settings.recordStreakIfTodayCleared(todayTasks: testTodayTasks)
+        check(!secondStreakCheck && settings.completionStreakCount == 1, "recordStreakIfTodayCleared prevents duplicate increments on the same day")
+        settings.completionStreakCount = origStreak
+        settings.lastCompletedDateString = origLastCompleted
         check(UndoToastManager.shared.canUndo, "UndoToastManager.canUndo is true after batch deletion")
         UndoToastManager.shared.undo()
         check(store.somedayTasks.count == 10, "UndoToastManager.undo() restores all 4 deleted tasks to Someday (got \(store.somedayTasks.count))")

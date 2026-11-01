@@ -193,6 +193,9 @@ public final class DataStore: ObservableObject {
         case .completed:
             ReminderService.shared.cancelReminder(for: task)
             SoundManager.shared.play(.completed)
+            if task.list == .today {
+                evaluateTodayClearedCelebration()
+            }
         case .inProgress:
             SoundManager.shared.play(.inProgress)
         case .incomplete:
@@ -298,12 +301,25 @@ public final class DataStore: ObservableObject {
         switch status {
         case .completed:
             SoundManager.shared.play(.completed)
+            if targetTasks.contains(where: { $0.list == .today }) {
+                evaluateTodayClearedCelebration()
+            }
         case .inProgress:
             SoundManager.shared.play(.inProgress)
         case .incomplete:
             SoundManager.shared.play(.button)
         }
         reloadAll()
+    }
+    
+    public func evaluateTodayClearedCelebration() {
+        let todayListTasks = tasks(for: .today)
+        let cleared = AppSettings.shared.recordStreakIfTodayCleared(todayTasks: todayListTasks)
+        if cleared {
+            let streak = AppSettings.shared.completionStreakCount
+            NSSound(named: "Hero")?.play()
+            UndoToastManager.shared.showInfo("🎉 Today cleared! 🔥 \(streak)-day streak")
+        }
     }
     
     public func clearCompleted(in list: TaskListType) {
