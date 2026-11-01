@@ -289,6 +289,25 @@ struct SmokeTestRunner {
         check(checklistTask.checklist[0].isCompleted, "First checklist item is completed")
         store.deleteTask(checklistTask)
 
+        // Calendar Peek test
+        let mockEvent1 = CalendarEventItem(
+            title: "Sprint Planning",
+            startDate: Date().addingTimeInterval(-600),
+            endDate: Date().addingTimeInterval(1800),
+            calendarTitle: "Work"
+        )
+        let mockEvent2 = CalendarEventItem(
+            title: "Design Sync",
+            startDate: Date().addingTimeInterval(3600),
+            endDate: Date().addingTimeInterval(5400),
+            calendarTitle: "Work"
+        )
+        CalendarPeekService.shared.setMockEvents([mockEvent1, mockEvent2])
+        check(CalendarPeekService.shared.todayEvents.count == 2, "CalendarPeekService holds 2 mock events (got \(CalendarPeekService.shared.todayEvents.count))")
+        check(mockEvent1.isNow, "Event occurring across current timestamp reports isNow=true")
+        check(!mockEvent2.isNow, "Future event reports isNow=false")
+        check(!mockEvent1.formattedTime.isEmpty, "CalendarEventItem formats start/end time")
+
         // ----------------------------------------------------
         // TEST 3: QuickAddParser Edge Cases & Performance Guard
         // ----------------------------------------------------
