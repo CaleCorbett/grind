@@ -14,6 +14,8 @@ public struct MainView: View {
     @State private var isShowingSettings: Bool = false
     @State private var isShowingFreshStart: Bool = false
     @State private var isShowingStaleReview: Bool = false
+    @State private var isShowingCommandPalette: Bool = false
+    @State private var isShowingImport: Bool = false
     
     // Focus Mode, Multi-Selection & Keyboard Navigation State
     @State private var focusedList: TaskListType? = nil
@@ -170,6 +172,30 @@ public struct MainView: View {
                     .transition(.scale(scale: 0.95).combined(with: .opacity))
             }
             
+            // Floating Command Palette Overlay
+            if isShowingCommandPalette {
+                Color.black.opacity(0.35)
+                    .ignoresSafeArea()
+                    .onTapGesture { isShowingCommandPalette = false }
+                
+                CommandPaletteView(
+                    isPresented: $isShowingCommandPalette,
+                    onSelectTask: { task in
+                        withAnimation(GrindTheme.easeSpring) {
+                            focusedList = task.list
+                            activeList = task.list
+                            selectedTaskIDs = [task.id]
+                            lastSelectedTaskID = task.id
+                            editingTask = task
+                        }
+                    },
+                    onSelectAction: { actionId in
+                        handlePaletteAction(actionId)
+                    }
+                )
+                .transition(.scale(scale: 0.96).combined(with: .opacity))
+            }
+            
             // Floating Undo / Destination Toast
             VStack {
                 Spacer()
@@ -177,6 +203,7 @@ public struct MainView: View {
             }
         }
         .animation(GrindTheme.easeSpring, value: isShowingQuickAdd)
+        .animation(GrindTheme.easeSpring, value: isShowingCommandPalette)
         .animation(GrindTheme.easeSpring, value: focusedList)
         .sheet(item: $editingTask) { task in
             TaskEditorSheet(task: task)
@@ -192,6 +219,9 @@ public struct MainView: View {
         }
         .sheet(isPresented: $isShowingStaleReview) {
             StaleReviewSheet()
+        }
+        .sheet(isPresented: $isShowingImport) {
+            ImportTasksSheet()
         }
         .preferredColorScheme(settings.preferredColorScheme)
         .onReceive(hotKey.$shouldOpenQuickAdd) { shouldOpen in
@@ -229,6 +259,13 @@ public struct MainView: View {
                 
                 Button("") { isShowingQuickAdd.toggle() }
                     .keyboardShortcut("n", modifiers: .command)
+                
+                Button("") {
+                    withAnimation(GrindTheme.easeSpring) {
+                        isShowingCommandPalette.toggle()
+                    }
+                }
+                .keyboardShortcut("k", modifiers: .command)
                 
                 Button("") {
                     withAnimation(GrindTheme.easeSpring) { focusedList = nil }
@@ -375,6 +412,22 @@ public struct MainView: View {
             
             // Header Action Buttons
             HStack(spacing: 8) {
+                // Command Palette Button
+                Button(action: {
+                    withAnimation(GrindTheme.easeSpring) {
+                        isShowingCommandPalette.toggle()
+                    }
+                }) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(GrindColors.secondary)
+                        .frame(width: 32, height: 32)
+                        .background(GrindColors.hair)
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .help("Command Palette (⌘K)")
+                
                 // Quick-Add Trigger Button with Monospace Keycap
                 Button(action: { isShowingQuickAdd = true }) {
                     HStack(spacing: 6) {
@@ -430,6 +483,7 @@ public struct MainView: View {
             legendItem(key: "⇧⌘↵", label: "Complete All in \((focusedList ?? activeList).title)")
             legendItem(key: "Space", label: "Cycle Status")
             legendItem(key: "1·2·3", label: "Move")
+            legendItem(key: "⌘K", label: "Palette")
             legendItem(key: "^⌥Space", label: "Global Capture")
             Spacer()
             if !selectedTaskIDs.isEmpty {
@@ -468,7 +522,7 @@ public struct MainView: View {
         guard keyMonitor == nil else { return }
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             // Ignore when modal overlays are open
-            if isShowingQuickAdd || isShowingArchive || isShowingSettings || editingTask != nil {
+            if isShowingQuickAdd || isShowingCommandPalette || isShowingArchive || isShowingSettings || editingTask != nil {
                 return event
             }
             
@@ -647,6 +701,43 @@ public struct MainView: View {
         let msg = movable.count == 1 ? "Moved to \(target.title)" : "Moved \(movable.count) to \(target.title)"
         UndoToastManager.shared.showInfo(msg, targetList: target)
         return true
+    }
+    
+    // MARK: - Command Palette Action Handler
+    
+    private func handlePaletteAction(_ actionId: String) {
+        switch actionId {
+        case "new_task":
+            withAnimation(GrindTheme.easeSpring) { isShowingQuickAdd = true }
+        case "focus_today":
+            withAnimation(GrindTheme.easeSpring) { focusedList = .today; activeList = .today }
+        case "focus_next":
+            withAnimation(GrindTheme.easeSpring) { focusedList = .next; activeList = .next }
+        case "focus_someday":
+            withAnimation(GrindTheme.easeSpring) { focusedList = .someday; activeList = .someday }
+        case "view_all":
+            withAnimation(GrindTheme.easeSpring) { focusedList = nil }
+        case "fresh_start":
+            isShowingFreshStart = true
+        case "stale_review":
+            isShowingStaleReview = true
+        case "open_logbook":
+            isShowingArchive = true
+        case "import_tasks":
+            isShowingImport = true
+        case "clear_completed":
+            store.clearCompleted(in: focusedList ?? activeList)
+        case "toggle_theme":
+            if settings.appearanceMode == "dark" {
+                settings.appearanceMode = "light"
+            } else {
+                settings.appearanceMode = "dark"
+            }
+        case "open_settings":
+            isShowingSettings = true
+        default:
+            break
+        }
     }
     
     private func checkFreshStartRitual() {
