@@ -282,6 +282,22 @@ public struct TaskRowView: View {
                 .help("Has notes — click to expand")
             }
             
+            // Recurrence Indicator Badge
+            if let rule = task.recurrenceRule, !rule.isEmpty {
+                HStack(spacing: 3) {
+                    Image(systemName: "repeat")
+                        .font(.system(size: 8.5))
+                    Text(RecurrenceService.displayString(for: rule))
+                        .font(.geist(.mono, size: 9.5))
+                }
+                .foregroundColor(GrindColors.secondary)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(GrindColors.hair)
+                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                .help("Repeats \(RecurrenceService.displayString(for: rule))")
+            }
+            
             // Monospace Reminder Badge
             if let reminder = task.reminderDate {
                 HStack(spacing: 3.5) {

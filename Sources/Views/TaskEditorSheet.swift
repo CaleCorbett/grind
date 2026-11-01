@@ -10,6 +10,7 @@ public struct TaskEditorSheet: View {
     @State private var selectedStatus: TaskStatus = .incomplete
     @State private var hasReminder: Bool = false
     @State private var reminderDate: Date = Date().addingTimeInterval(3600)
+    @State private var selectedRecurrence: String = ""
     
     public init(task: TodoTask) {
         self.task = task
@@ -113,6 +114,23 @@ public struct TaskEditorSheet: View {
                     .background(GrindColors.hair.opacity(0.2))
                     .cornerRadius(10)
                     
+                    // Recurrence
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("REPEAT")
+                            .font(.geist(.medium, size: 11))
+                            .foregroundColor(GrindColors.secondary)
+                            .tracking(0.5)
+                        
+                        Picker("Repeat", selection: $selectedRecurrence) {
+                            Text("Never").tag("")
+                            Text("Daily").tag("daily")
+                            Text("Weekdays").tag("weekdays")
+                            Text("Weekly").tag("weekly")
+                            Text("Monthly").tag("monthly")
+                        }
+                        .pickerStyle(.menu)
+                    }
+                    
                     // Notes Editor
                     VStack(alignment: .leading, spacing: 6) {
                         Text("NOTES & LINKS")
@@ -153,6 +171,7 @@ public struct TaskEditorSheet: View {
             notes = task.notes ?? ""
             selectedList = task.list
             selectedStatus = task.status
+            selectedRecurrence = task.recurrenceRule ?? ""
             if let date = task.reminderDate {
                 hasReminder = true
                 reminderDate = date
@@ -166,6 +185,7 @@ public struct TaskEditorSheet: View {
         task.notes = notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : notes
         task.list = selectedList
         task.status = selectedStatus
+        task.recurrenceRule = selectedRecurrence.isEmpty ? nil : selectedRecurrence
         let newReminder = hasReminder ? reminderDate : nil
         task.reminderDate = newReminder
         

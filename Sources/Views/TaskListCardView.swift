@@ -18,7 +18,7 @@ public struct TaskListCardView: View {
     let onBatchSetStatus: ([TodoTask], TaskStatus) -> Void
     let onBatchMove: ([TodoTask], TaskListType) -> Void
     let onBatchDelete: ([TodoTask]) -> Void
-    let onAddTask: (String, TaskListType, Date?, Bool) -> Void
+    let onAddTask: (String, TaskListType, Date?, Bool, String?) -> Void
     let onClearCompleted: (TaskListType) -> Void
     let onToggleFocusCard: (TaskListType) -> Void
     let onOpenFreshStart: (() -> Void)?
@@ -45,7 +45,7 @@ public struct TaskListCardView: View {
         onBatchSetStatus: @escaping ([TodoTask], TaskStatus) -> Void = { _, _ in },
         onBatchMove: @escaping ([TodoTask], TaskListType) -> Void = { _, _ in },
         onBatchDelete: @escaping ([TodoTask]) -> Void = { _ in },
-        onAddTask: @escaping (String, TaskListType, Date?, Bool) -> Void = { _, _, _, _ in },
+        onAddTask: @escaping (String, TaskListType, Date?, Bool, String?) -> Void = { _, _, _, _, _ in },
         onClearCompleted: @escaping (TaskListType) -> Void,
         onToggleFocusCard: @escaping (TaskListType) -> Void = { _ in },
         onOpenFreshStart: (() -> Void)? = nil
@@ -649,6 +649,22 @@ public struct TaskListCardView: View {
                 .transition(.scale.combined(with: .opacity))
             }
             
+            // Live inline parsed recurrence badge
+            if let rule = inlineParsed.recurrenceRule {
+                HStack(spacing: 3) {
+                    Image(systemName: "repeat")
+                        .font(.system(size: 9))
+                    Text(RecurrenceService.displayString(for: rule))
+                        .font(.geist(.mono, size: 10.5))
+                }
+                .foregroundColor(GrindColors.primary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(GrindColors.hair)
+                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                .transition(.scale.combined(with: .opacity))
+            }
+            
             if !newTodoText.isEmpty {
                 Button(action: commitNewTodo) {
                     Image(systemName: "arrow.up.circle.fill")
@@ -706,7 +722,7 @@ public struct TaskListCardView: View {
         guard !trimmed.isEmpty else { return }
         let parsed = inlineParsed
         let finalTitle = parsed.cleanTitle.isEmpty ? trimmed : parsed.cleanTitle
-        onAddTask(finalTitle, listType, parsed.reminderDate, parsed.isEvening)
+        onAddTask(finalTitle, listType, parsed.reminderDate, parsed.isEvening, parsed.recurrenceRule)
         newTodoText = ""
     }
     

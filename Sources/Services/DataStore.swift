@@ -168,7 +168,14 @@ public final class DataStore: ObservableObject {
         return try? context.fetch(descriptor).first
     }
     
-    public func addTask(title: String, to list: TaskListType, notes: String? = nil, reminderDate: Date? = nil, isEvening: Bool = false) {
+    public func addTask(
+        title: String,
+        to list: TaskListType,
+        notes: String? = nil,
+        reminderDate: Date? = nil,
+        isEvening: Bool = false,
+        recurrenceRule: String? = nil
+    ) {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         
@@ -184,6 +191,7 @@ public final class DataStore: ObservableObject {
             notes: notes,
             reminderDate: reminderDate,
             orderIndex: order,
+            recurrenceRule: recurrenceRule,
             isEvening: isEvening
         )
         context.insert(task)
@@ -201,8 +209,11 @@ public final class DataStore: ObservableObject {
         let prev = task.status
         let next = prev.nextStatus(allowInProgress: AppSettings.shared.allowInProgress)
         task.status = next
-        if next == .completed && AppSettings.shared.archiveImmediately {
-            task.isArchived = true
+        if next == .completed {
+            if AppSettings.shared.archiveImmediately {
+                task.isArchived = true
+            }
+            handleTaskCompletionRecurrence(task)
         }
         try? context.save()
         
@@ -305,8 +316,12 @@ public final class DataStore: ObservableObject {
             ReminderService.shared.cancelReminders(for: targetTasks)
         }
         for task in targetTasks {
+            let wasCompleted = task.status == .completed
             task.status = status
             if status == .completed {
+                if !wasCompleted {
+                    handleTaskCompletionRecurrence(task)
+                }
                 if AppSettings.shared.archiveImmediately {
                     task.isArchived = true
                 }
@@ -327,6 +342,37 @@ public final class DataStore: ObservableObject {
             SoundManager.shared.play(.button)
         }
         reloadAll()
+    }
+    
+    public func handleTaskCompletionRecurrence(_ task: TodoTask) {
+        guard let rule = task.recurrenceRule, !rule.isEmpty else { return }
+        
+        let nextDate = RecurrenceService.nextDueDate(for: rule, from: Date())
+        let nextList: TaskListType = Calendar.current.isDateInToday(nextDate) ? .today : .next
+        let nextReminder: Date? = task.reminderDate != nil ? nextDate : nil
+        
+        let existing = tasks(for: nextList)
+        let order = (AppSettings.shared.addTaskPosition == "top")
+            ? (existing.map(\.orderIndex).min() ?? 0) - 1
+            : (existing.map(\.orderIndex).max() ?? 0) + 1
+        
+        let nextTask = TodoTask(
+            title: task.title,
+            list: nextList,
+            status: .incomplete,
+            notes: task.notes,
+            reminderDate: nextReminder,
+            orderIndex: order,
+            recurrenceRule: rule,
+            isEvening: task.isEvening
+        )
+        context.insert(nextTask)
+        if nextReminder != nil {
+            ReminderService.shared.scheduleReminder(for: nextTask)
+        }
+        
+        let ruleDisplay = RecurrenceService.displayString(for: rule)
+        UndoToastManager.shared.showInfo("Next \(ruleDisplay) to-do scheduled in \(nextList.title)", targetList: nextList)
     }
     
     public func evaluateTodayClearedCelebration() {

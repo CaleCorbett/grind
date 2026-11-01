@@ -6,6 +6,23 @@ public struct ParsedQuickAdd {
     public var isEvening: Bool
     public var reminderDate: Date?
     public var matchedDateString: String?
+    public var recurrenceRule: String?
+    
+    public init(
+        cleanTitle: String,
+        targetList: TaskListType,
+        isEvening: Bool = false,
+        reminderDate: Date? = nil,
+        matchedDateString: String? = nil,
+        recurrenceRule: String? = nil
+    ) {
+        self.cleanTitle = cleanTitle
+        self.targetList = targetList
+        self.isEvening = isEvening
+        self.reminderDate = reminderDate
+        self.matchedDateString = matchedDateString
+        self.recurrenceRule = recurrenceRule
+    }
 }
 
 public final class QuickAddParser {
@@ -26,10 +43,35 @@ public final class QuickAddParser {
         var isEvening: Bool = false
         var reminderDate: Date? = nil
         var matchedDateString: String? = nil
+        var recurrenceRule: String? = nil
         
         let lower = working.lowercased()
         
-        // 1. Explicit list keywords & evening keyword
+        // 1. Recurrence detection (extracted before date detector to avoid partial date collision)
+        let recurrencePatterns: [(String, String)] = [
+            ("\\b(every\\s+weekday|weekdays)\\b", "weekdays"),
+            ("\\b(every\\s+day|daily)\\b", "daily"),
+            ("\\b(every\\s+week|weekly)\\b", "weekly"),
+            ("\\b(every\\s+month|monthly)\\b", "monthly"),
+            ("\\b(every\\s+monday)\\b", "every monday"),
+            ("\\b(every\\s+tuesday)\\b", "every tuesday"),
+            ("\\b(every\\s+wednesday)\\b", "every wednesday"),
+            ("\\b(every\\s+thursday)\\b", "every thursday"),
+            ("\\b(every\\s+friday)\\b", "every friday"),
+            ("\\b(every\\s+saturday)\\b", "every saturday"),
+            ("\\b(every\\s+sunday)\\b", "every sunday")
+        ]
+        
+        for (pattern, rule) in recurrencePatterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+               regex.firstMatch(in: working, options: [], range: NSRange(location: 0, length: working.utf16.count)) != nil {
+                recurrenceRule = rule
+                working = removePattern(working, pattern: pattern)
+                break
+            }
+        }
+        
+        // 2. Explicit list keywords & evening keyword
         if lower.contains("tonight") || lower.contains("this evening") || lower.contains("evening") {
             isEvening = true
             targetList = .today
@@ -88,7 +130,8 @@ public final class QuickAddParser {
             targetList: targetList,
             isEvening: isEvening,
             reminderDate: reminderDate,
-            matchedDateString: matchedDateString
+            matchedDateString: matchedDateString,
+            recurrenceRule: recurrenceRule
         )
     }
     

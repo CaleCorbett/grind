@@ -76,12 +76,16 @@ public final class ReminderService: NSObject, UNUserNotificationCenterDelegate {
             switch response.actionIdentifier {
             case Self.actionComplete:
                 task.status = .completed
+                DataStore.shared.handleTaskCompletionRecurrence(task)
                 if AppSettings.shared.archiveImmediately {
                     task.isArchived = true
                 }
                 try? DataStore.shared.context.save()
                 DataStore.shared.reloadAll()
                 SoundManager.shared.play(.completed)
+                if task.list == .today {
+                    DataStore.shared.evaluateTodayClearedCelebration()
+                }
                 
             case Self.actionSnooze1Hour:
                 let newDate = Date().addingTimeInterval(3600)

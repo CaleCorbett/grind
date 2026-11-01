@@ -115,8 +115,14 @@ public struct MainView: View {
                                         lastSelectedTaskID = selectedTaskIDs.first
                                         store.deleteTasks(batch)
                                     },
-                                    onAddTask: { title, list, reminder, isEvening in
-                                        store.addTask(title: title, to: list, reminderDate: reminder, isEvening: isEvening)
+                                    onAddTask: { title, list, reminder, isEvening, recurrence in
+                                        store.addTask(
+                                            title: title,
+                                            to: list,
+                                            reminderDate: reminder,
+                                            isEvening: isEvening,
+                                            recurrenceRule: recurrence
+                                        )
                                     },
                                     onClearCompleted: { store.clearCompleted(in: $0) },
                                     onToggleFocusCard: { target in
