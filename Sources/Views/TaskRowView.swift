@@ -14,6 +14,7 @@ public struct TaskRowView: View {
     let onSelectAllInList: (() -> Void)?
     let onMarkAllCompleteInList: (() -> Void)?
     
+    @ObservedObject private var focusTimer = FocusTimerService.shared
     @State private var isHovered = false
     @State private var isTargetedForRowDrop = false
     @State private var draftTitle: String = ""
@@ -188,6 +189,37 @@ public struct TaskRowView: View {
             Button("Open Detail Sheet...") {
                 onOpenSheet()
             }
+            
+            Divider()
+            
+            if focusTimer.activeTaskID == task.id {
+                Button(focusTimer.isPaused ? "Resume Focus Session" : "Pause Focus Session") {
+                    if focusTimer.isPaused {
+                        focusTimer.resumeTimer()
+                    } else {
+                        focusTimer.pauseTimer()
+                    }
+                }
+                Button("Stop Focus Session") {
+                    focusTimer.stopTimer(logElapsed: true)
+                }
+            } else {
+                Menu("Start Focus Timer") {
+                    Button("25 Minutes (Standard)") {
+                        focusTimer.startTimer(for: task, durationMinutes: 25)
+                    }
+                    Button("15 Minutes (Sprint)") {
+                        focusTimer.startTimer(for: task, durationMinutes: 15)
+                    }
+                    Button("45 Minutes (Deep Work)") {
+                        focusTimer.startTimer(for: task, durationMinutes: 45)
+                    }
+                    Button("60 Minutes") {
+                        focusTimer.startTimer(for: task, durationMinutes: 60)
+                    }
+                }
+            }
+            
             if let onSelectAllInList {
                 Button("Select All in \(task.list.title) (⌘A)") {
                     onSelectAllInList()
@@ -236,6 +268,42 @@ public struct TaskRowView: View {
     @ViewBuilder
     private var trailingCompactAccessories: some View {
         HStack(spacing: 6) {
+            // Active Focus Timer Indicator
+            if focusTimer.activeTaskID == task.id {
+                HStack(spacing: 4) {
+                    Image(systemName: focusTimer.isPaused ? "pause.fill" : "timer")
+                        .font(.system(size: 8.5))
+                    Text(focusTimer.formattedRemainingTime)
+                        .font(.geist(.mono, size: 10.5))
+                }
+                .foregroundColor(.orange)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2.5)
+                .background(Color.orange.opacity(0.18))
+                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                .help("Focus session active — click to pause/resume")
+                .onTapGesture {
+                    if focusTimer.isPaused {
+                        focusTimer.resumeTimer()
+                    } else {
+                        focusTimer.pauseTimer()
+                    }
+                }
+            } else if task.focusSecondsLogged > 0 {
+                HStack(spacing: 3) {
+                    Image(systemName: "timer")
+                        .font(.system(size: 8))
+                    Text("\(max(1, task.focusSecondsLogged / 60))m")
+                        .font(.geist(.mono, size: 9))
+                }
+                .foregroundColor(GrindColors.secondary)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(GrindColors.hair.opacity(0.6))
+                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                .help("Logged \(task.focusSecondsLogged / 60) minutes of focus")
+            }
+            
             // Hover Quick-Triage Actions (Linear / Superlist style)
             if isHovered || isSelected {
                 let target = task.list.primaryQuickMoveTarget

@@ -144,6 +144,14 @@ public final class AppSettings: ObservableObject {
         }
     }
     
+    public var focusDurationMinutes: Int {
+        willSet { if newValue != focusDurationMinutes { objectWillChange.send() } }
+        didSet {
+            guard oldValue != focusDurationMinutes else { return }
+            UserDefaults.standard.set(focusDurationMinutes, forKey: "focusDurationMinutes")
+        }
+    }
+    
     public static let streakDateFormatter: DateFormatter = {
         let df = DateFormatter()
         df.dateFormat = "yyyy-MM-dd"
@@ -206,6 +214,7 @@ public final class AppSettings: ObservableObject {
         self.lastCompletedDateString = d.string(forKey: "lastCompletedDateString")
         self.lastFreshStartDateString = d.string(forKey: "lastFreshStartDateString")
         self.freshStartRitualEnabled = d.object(forKey: "freshStartRitualEnabled") as? Bool ?? true
+        self.focusDurationMinutes = d.object(forKey: "focusDurationMinutes") as? Int ?? 25
     }
     
     public var preferredColorScheme: ColorScheme? {
