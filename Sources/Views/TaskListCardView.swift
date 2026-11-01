@@ -18,7 +18,7 @@ public struct TaskListCardView: View {
     let onBatchSetStatus: ([TodoTask], TaskStatus) -> Void
     let onBatchMove: ([TodoTask], TaskListType) -> Void
     let onBatchDelete: ([TodoTask]) -> Void
-    let onAddTask: (String, TaskListType, Date?) -> Void
+    let onAddTask: (String, TaskListType, Date?, Bool) -> Void
     let onClearCompleted: (TaskListType) -> Void
     let onToggleFocusCard: (TaskListType) -> Void
     
@@ -44,7 +44,7 @@ public struct TaskListCardView: View {
         onBatchSetStatus: @escaping ([TodoTask], TaskStatus) -> Void = { _, _ in },
         onBatchMove: @escaping ([TodoTask], TaskListType) -> Void = { _, _ in },
         onBatchDelete: @escaping ([TodoTask]) -> Void = { _ in },
-        onAddTask: @escaping (String, TaskListType, Date?) -> Void,
+        onAddTask: @escaping (String, TaskListType, Date?, Bool) -> Void = { _, _, _, _ in },
         onClearCompleted: @escaping (TaskListType) -> Void,
         onToggleFocusCard: @escaping (TaskListType) -> Void = { _ in }
     ) {
@@ -92,7 +92,7 @@ public struct TaskListCardView: View {
     
     private var inlineParsed: ParsedQuickAdd {
         guard !newTodoText.isEmpty else {
-            return ParsedQuickAdd(cleanTitle: "", targetList: listType, reminderDate: nil, matchedDateString: nil)
+            return ParsedQuickAdd(cleanTitle: "", targetList: listType, isEvening: false, reminderDate: nil, matchedDateString: nil)
         }
         return QuickAddParser.parse(newTodoText)
     }
@@ -115,43 +115,34 @@ public struct TaskListCardView: View {
             if tasks.isEmpty {
                 emptyStateView
             } else {
+                let daytimeTasks = (listType == .today) ? tasks.filter { !$0.isEvening } : tasks
+                let eveningTasks = (listType == .today) ? tasks.filter { $0.isEvening } : []
+                
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyVStack(spacing: 6) {
-                        ForEach(tasks) { task in
-                            TaskRowView(
-                                task: task,
-                                isSelected: selectedTaskIDs.contains(task.id),
-                                isExpanded: expandedTaskID == task.id,
-                                onSelect: {
-                                    let flags = NSEvent.modifierFlags.intersection(.deviceIndependentFlagsMask)
-                                    if !flags.intersection([.command, .shift]).isEmpty {
-                                        isSelectionModeActive = true
-                                    }
-                                    onSelectTask(task, flags)
-                                },
-                                onToggleExpand: {
-                                    withAnimation(GrindTheme.expandSpring) {
-                                        onToggleExpandTask(task)
-                                    }
-                                },
-                                onToggle: { onToggleStatus(task) },
-                                onOpenSheet: { onEditTask(task) },
-                                onDelete: { onDeleteTask(task) },
-                                onMove: { target in onMoveTask(task, target) },
-                                onReorderBefore: { dragged in
-                                    DataStore.shared.reorderTask(dragged, before: task)
-                                },
-                                onSelectAllInList: {
-                                    withAnimation(GrindTheme.snapSpring) {
-                                        isSelectionModeActive = true
-                                        onSelectAllInGroup(listType)
-                                    }
-                                },
-                                onMarkAllCompleteInList: {
-                                    toggleMarkAllCompleteInGroup()
-                                }
-                            )
-                            .draggable(task.id.uuidString)
+                        ForEach(daytimeTasks) { task in
+                            taskRow(for: task)
+                        }
+                        
+                        if listType == .today && !eveningTasks.isEmpty {
+                            HStack(spacing: 8) {
+                                Image(systemName: "moon.stars.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(GrindColors.secondary)
+                                Text("This Evening")
+                                    .font(.geist(.semiBold, size: 12))
+                                    .foregroundColor(GrindColors.secondary)
+                                Rectangle()
+                                    .fill(GrindColors.hair)
+                                    .frame(height: 1)
+                            }
+                            .padding(.top, 8)
+                            .padding(.bottom, 2)
+                            .padding(.horizontal, 4)
+                            
+                            ForEach(eveningTasks) { task in
+                                taskRow(for: task)
+                            }
                         }
                     }
                     .padding(.vertical, 10)
@@ -627,12 +618,50 @@ public struct TaskListCardView: View {
         .animation(GrindTheme.snapSpring, value: inlineParsed.reminderDate != nil)
     }
     
+    @ViewBuilder
+    private func taskRow(for task: TodoTask) -> some View {
+        TaskRowView(
+            task: task,
+            isSelected: selectedTaskIDs.contains(task.id),
+            isExpanded: expandedTaskID == task.id,
+            onSelect: {
+                let flags = NSEvent.modifierFlags.intersection(.deviceIndependentFlagsMask)
+                if !flags.intersection([.command, .shift]).isEmpty {
+                    isSelectionModeActive = true
+                }
+                onSelectTask(task, flags)
+            },
+            onToggleExpand: {
+                withAnimation(GrindTheme.expandSpring) {
+                    onToggleExpandTask(task)
+                }
+            },
+            onToggle: { onToggleStatus(task) },
+            onOpenSheet: { onEditTask(task) },
+            onDelete: { onDeleteTask(task) },
+            onMove: { target in onMoveTask(task, target) },
+            onReorderBefore: { dragged in
+                DataStore.shared.reorderTask(dragged, before: task)
+            },
+            onSelectAllInList: {
+                withAnimation(GrindTheme.snapSpring) {
+                    isSelectionModeActive = true
+                    onSelectAllInGroup(listType)
+                }
+            },
+            onMarkAllCompleteInList: {
+                toggleMarkAllCompleteInGroup()
+            }
+        )
+        .draggable(task.id.uuidString)
+    }
+    
     private func commitNewTodo() {
         let trimmed = newTodoText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         let parsed = inlineParsed
         let finalTitle = parsed.cleanTitle.isEmpty ? trimmed : parsed.cleanTitle
-        onAddTask(finalTitle, listType, parsed.reminderDate)
+        onAddTask(finalTitle, listType, parsed.reminderDate, parsed.isEvening)
         newTodoText = ""
     }
     

@@ -3,6 +3,7 @@ import Foundation
 public struct ParsedQuickAdd {
     public var cleanTitle: String
     public var targetList: TaskListType
+    public var isEvening: Bool
     public var reminderDate: Date?
     public var matchedDateString: String?
 }
@@ -13,21 +14,28 @@ public final class QuickAddParser {
     public static func parse(_ rawInput: String) -> ParsedQuickAdd {
         let trimmed = rawInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            return ParsedQuickAdd(cleanTitle: "", targetList: .today, reminderDate: nil, matchedDateString: nil)
+            return ParsedQuickAdd(cleanTitle: "", targetList: .today, isEvening: false, reminderDate: nil, matchedDateString: nil)
         }
         
         guard AppSettings.shared.smartQuickAddEnabled else {
-            return ParsedQuickAdd(cleanTitle: trimmed, targetList: .today, reminderDate: nil, matchedDateString: nil)
+            return ParsedQuickAdd(cleanTitle: trimmed, targetList: .today, isEvening: false, reminderDate: nil, matchedDateString: nil)
         }
         
         var working = trimmed
         var targetList: TaskListType = .today
+        var isEvening: Bool = false
         var reminderDate: Date? = nil
         var matchedDateString: String? = nil
         
         let lower = working.lowercased()
         
-        // 1. Explicit list keywords
+        // 1. Explicit list keywords & evening keyword
+        if lower.contains("tonight") || lower.contains("this evening") || lower.contains("evening") {
+            isEvening = true
+            targetList = .today
+            working = removePattern(working, pattern: "\\b(tonight|this\\s+evening|evening)\\b")
+        }
+        
         if lower.contains("someday") {
             targetList = .someday
             working = removePattern(working, pattern: "\\b(on\\s+)?someday\\b")
@@ -78,6 +86,7 @@ public final class QuickAddParser {
         return ParsedQuickAdd(
             cleanTitle: clean,
             targetList: targetList,
+            isEvening: isEvening,
             reminderDate: reminderDate,
             matchedDateString: matchedDateString
         )
