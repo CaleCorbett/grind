@@ -265,11 +265,30 @@ public struct TaskListCardView: View {
                 }
                 
                 if listType == .today {
-                    Text(formattedTodayDate)
-                        .font(.geist(.mono, size: 10.5))
-                        .foregroundColor(GrindColors.secondary)
-                        .textCase(.uppercase)
-                        .tracking(0.5)
+                    HStack(spacing: 6) {
+                        Text(formattedTodayDate)
+                            .font(.geist(.mono, size: 10.5))
+                            .foregroundColor(GrindColors.secondary)
+                            .textCase(.uppercase)
+                            .tracking(0.5)
+                        
+                        let cap = AppSettings.shared.todayCapLimit
+                        let remaining = tasks.filter { $0.status != .completed }.count
+                        if cap > 0 && remaining > cap {
+                            HStack(spacing: 3) {
+                                Image(systemName: "exclamationmark.circle.fill")
+                                    .font(.system(size: 8))
+                                Text("Heavy (\(remaining)/\(cap))")
+                                    .font(.geist(.mono, size: 9.5))
+                            }
+                            .foregroundColor(.orange)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1.5)
+                            .background(Color.orange.opacity(0.12))
+                            .clipShape(Capsule())
+                            .help("Today is carrying \(remaining) to-dos (recommended limit: \(cap)). Consider moving some to Next.")
+                        }
+                    }
                 } else {
                     Text(listType.subtitle)
                         .font(.geist(.regular, size: 11))
