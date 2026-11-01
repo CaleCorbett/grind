@@ -104,6 +104,14 @@ public final class AppSettings: ObservableObject {
         }
     }
     
+    public var todayCapLimit: Int {
+        willSet { if newValue != todayCapLimit { objectWillChange.send() } }
+        didSet {
+            guard oldValue != todayCapLimit else { return }
+            UserDefaults.standard.set(todayCapLimit, forKey: "todayCapLimit")
+        }
+    }
+    
     private init() {
         let d = UserDefaults.standard
         self.soundEffectsEnabled = d.object(forKey: "soundEffectsEnabled") as? Bool ?? true
@@ -118,6 +126,7 @@ public final class AppSettings: ObservableObject {
         self.selectedAppIcon = d.string(forKey: "selectedAppIcon") ?? "Grind Dark"
         self.archiveImmediately = d.object(forKey: "archiveImmediately") as? Bool ?? false
         self.autoMoveRemindersToToday = d.object(forKey: "autoMoveRemindersToToday") as? Bool ?? true
+        self.todayCapLimit = d.object(forKey: "todayCapLimit") as? Int ?? 5
     }
     
     public var preferredColorScheme: ColorScheme? {

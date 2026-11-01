@@ -63,6 +63,19 @@ public struct SettingsView: View {
                 Toggle("Archive Completed Immediately", isOn: $settings.archiveImmediately)
             }
             
+            Section("Focus & Daily Limits") {
+                Picker("Today Cap Soft Warning", selection: $settings.todayCapLimit) {
+                    Text("Off").tag(0)
+                    Text("3 to-dos (Ivy Lee / Essential)").tag(3)
+                    Text("5 to-dos (Recommended)").tag(5)
+                    Text("7 to-dos").tag(7)
+                    Text("10 to-dos").tag(10)
+                }
+                Text("Displays a subtle warning badge when Today's incomplete tasks exceed your daily threshold.")
+                    .font(.caption)
+                    .foregroundColor(GrindColors.secondary)
+            }
+            
             Section("Appearance") {
                 Picker("Theme", selection: $settings.appearanceMode) {
                     Text("System").tag("system")

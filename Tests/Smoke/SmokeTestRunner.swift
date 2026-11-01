@@ -64,6 +64,7 @@ struct SmokeTestRunner {
         let curIcon = settings.selectedAppIcon
         let curArch = settings.archiveImmediately
         let curAuto = settings.autoMoveRemindersToToday
+        let curCap = settings.todayCapLimit
 
         for _ in 0..<20 {
             settings.showInMenuBar = curShow
@@ -76,6 +77,7 @@ struct SmokeTestRunner {
             settings.selectedAppIcon = curIcon
             settings.archiveImmediately = curArch
             settings.autoMoveRemindersToToday = curAuto
+            settings.todayCapLimit = curCap
         }
         check(settingsEmissions == 0, "Re-assigning identical values 20x to all AppSettings properties emits 0 objectWillChange events (got \(settingsEmissions))")
 
