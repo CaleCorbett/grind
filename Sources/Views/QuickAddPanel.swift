@@ -237,7 +237,8 @@ public struct QuickAddPanel: View {
         DataStore.shared.addTask(
             title: trimmed,
             to: target,
-            reminderDate: parsed.reminderDate
+            reminderDate: parsed.reminderDate,
+            isEvening: parsed.isEvening
         )
         SoundManager.shared.play(.notification)
         UndoToastManager.shared.showInfo("Added to \(target.title) · “\(trimmed)”", targetList: target)

@@ -179,6 +179,9 @@ struct SmokeTestRunner {
         let emptyParsed = QuickAddParser.parse("")
         check(emptyParsed.cleanTitle.isEmpty, "Empty input parses to empty cleanTitle")
 
+        let eveningParsed = QuickAddParser.parse("Watch movie tonight")
+        check(eveningParsed.isEvening && eveningParsed.targetList == .today && eveningParsed.cleanTitle == "Watch movie", "'Watch movie tonight' parses as isEvening=true on .today with cleanTitle 'Watch movie'")
+
         let somedayParsed = QuickAddParser.parse("Learn Rust someday")
         check(somedayParsed.targetList == .someday && somedayParsed.cleanTitle == "Learn Rust", "'Learn Rust someday' routes to .someday with clean title 'Learn Rust' (got '\(somedayParsed.cleanTitle)')")
 

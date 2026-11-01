@@ -200,6 +200,16 @@ public struct TaskRowView: View {
             
             Divider()
             
+            if task.list == .today {
+                Button(task.isEvening ? "Move to Daytime" : "Move to This Evening") {
+                    task.isEvening.toggle()
+                    try? DataStore.shared.context.save()
+                    DataStore.shared.reloadAll()
+                }
+                
+                Divider()
+            }
+            
             Menu("Move To") {
                 ForEach(TaskListType.allCases) { target in
                     if task.list != target {

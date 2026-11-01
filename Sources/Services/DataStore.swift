@@ -151,7 +151,7 @@ public final class DataStore: ObservableObject {
         return try? context.fetch(descriptor).first
     }
     
-    public func addTask(title: String, to list: TaskListType, notes: String? = nil, reminderDate: Date? = nil) {
+    public func addTask(title: String, to list: TaskListType, notes: String? = nil, reminderDate: Date? = nil, isEvening: Bool = false) {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         
@@ -166,7 +166,8 @@ public final class DataStore: ObservableObject {
             status: .incomplete,
             notes: notes,
             reminderDate: reminderDate,
-            orderIndex: order
+            orderIndex: order,
+            isEvening: isEvening
         )
         context.insert(task)
         try? context.save()
