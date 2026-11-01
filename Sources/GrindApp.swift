@@ -28,6 +28,9 @@ struct GrindApp: App {
             MainView()
                 .modelContainer(DataStore.shared.container)
                 .frame(minWidth: 880, minHeight: 560)
+                .onOpenURL { url in
+                    handleIncomingURL(url)
+                }
         }
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unified(showsTitle: false))
@@ -64,5 +67,36 @@ struct GrindApp: App {
             return "\(count).circle"
         }
         return "checkmark.circle.fill"
+    }
+    
+    private func handleIncomingURL(_ url: URL) {
+        guard url.scheme?.lowercased() == "grind" else { return }
+        let host = url.host?.lowercased() ?? url.pathComponents.first?.lowercased()
+        
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return }
+        let queryItems = components.queryItems ?? []
+        
+        switch host {
+        case "add":
+            let title = queryItems.first(where: { $0.name == "title" })?.value ?? ""
+            guard !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+            
+            let listParam = queryItems.first(where: { $0.name == "list" })?.value?.lowercased() ?? "today"
+            let list = TaskListType(rawValue: listParam) ?? .today
+            let notes = queryItems.first(where: { $0.name == "notes" })?.value
+            let evening = queryItems.first(where: { $0.name == "evening" })?.value?.lowercased() == "true"
+            
+            store.addTask(title: title, to: list, notes: notes, isEvening: evening)
+            UndoToastManager.shared.showInfo("Added via URL: “\(title)”", targetList: list)
+            
+        case "show":
+            let listParam = queryItems.first(where: { $0.name == "list" })?.value?.lowercased() ?? "today"
+            if let list = TaskListType(rawValue: listParam) {
+                UndoToastManager.shared.requestedFocusList = list
+            }
+            
+        default:
+            break
+        }
     }
 }
