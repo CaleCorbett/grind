@@ -9,6 +9,7 @@ struct GrindApp: App {
     
     init() {
         FontManager.shared.registerCustomFonts()
+        ServicesProvider.shared.registerServices()
     }
     
     private var menuBarInsertedBinding: Binding<Bool> {

@@ -285,6 +285,15 @@ struct SmokeTestRunner {
         check(FrontmostAppCaptureService.shared.lastCapturedContext?.appName == "Safari", "FrontmostAppCaptureService holds captured context")
         check(FrontmostAppCaptureService.shared.lastCapturedContext?.urlString == "https://github.com/CaleCorbett/grind", "Captured context retains URL")
 
+        // ServicesProvider processing test
+        let beforeTodayServicesCount = store.todayTasks.count
+        ServicesProvider.shared.processIncomingText("Read article tonight")
+        pumpRunLoop(seconds: 0.05)
+        check(store.todayTasks.count == beforeTodayServicesCount + 1, "ServicesProvider.processIncomingText adds task parsed from Services menu")
+        let servicesAddedTask = store.todayTasks.first(where: { $0.title == "Read article" })
+        check(servicesAddedTask != nil && servicesAddedTask?.isEvening == true, "ServicesProvider parses 'tonight' correctly")
+        if let t = servicesAddedTask { store.deleteTask(t) }
+
         // ----------------------------------------------------
         // TEST 4: AutoMoveService Daily Sweep
         // ----------------------------------------------------
