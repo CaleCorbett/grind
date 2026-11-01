@@ -82,4 +82,44 @@ public final class TodoTask: Identifiable {
         let diff = Calendar.current.dateComponents([.day], from: touchDate, to: Date())
         return max(0, diff.day ?? 0)
     }
+    
+    public var checklist: [ChecklistItem] {
+        get {
+            guard let json = checklistJSON, let data = json.data(using: .utf8) else { return [] }
+            if let items = try? JSONDecoder().decode([ChecklistItem].self, from: data) {
+                return items
+            }
+            if let strings = try? JSONDecoder().decode([String].self, from: data) {
+                return strings.map { ChecklistItem(title: $0) }
+            }
+            return []
+        }
+        set {
+            if newValue.isEmpty {
+                checklistJSON = nil
+            } else if let data = try? JSONEncoder().encode(newValue),
+                      let str = String(data: data, encoding: .utf8) {
+                checklistJSON = str
+            }
+        }
+    }
+    
+    public var checklistSummary: (completed: Int, total: Int)? {
+        let items = checklist
+        guard !items.isEmpty else { return nil }
+        let completed = items.filter(\.isCompleted).count
+        return (completed, items.count)
+    }
+}
+
+public struct ChecklistItem: Identifiable, Codable, Hashable, Sendable {
+    public var id: UUID
+    public var title: String
+    public var isCompleted: Bool
+    
+    public init(id: UUID = UUID(), title: String, isCompleted: Bool = false) {
+        self.id = id
+        self.title = title
+        self.isCompleted = isCompleted
+    }
 }

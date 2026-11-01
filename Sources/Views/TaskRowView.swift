@@ -19,6 +19,7 @@ public struct TaskRowView: View {
     @State private var isTargetedForRowDrop = false
     @State private var draftTitle: String = ""
     @State private var draftNotes: String = ""
+    @State private var newSubItemDraft: String = ""
     @State private var showDatePickerPopover = false
     @FocusState private var focusedField: InlineField?
     
@@ -367,6 +368,22 @@ public struct TaskRowView: View {
                 .help("Repeats \(RecurrenceService.displayString(for: rule))")
             }
             
+            // Checklist Progress Badge
+            if let summary = task.checklistSummary {
+                HStack(spacing: 3) {
+                    Image(systemName: summary.completed == summary.total ? "checkmark.circle.fill" : "checklist")
+                        .font(.system(size: 8.5))
+                    Text("\(summary.completed)/\(summary.total)")
+                        .font(.geist(.mono, size: 9.5))
+                }
+                .foregroundColor(summary.completed == summary.total ? .green : GrindColors.secondary)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(GrindColors.hair.opacity(0.8))
+                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                .help("Sub-tasks: \(summary.completed) of \(summary.total) completed")
+            }
+            
             // Stale Someday Indicator Badge
             if task.isStaleSomeday {
                 HStack(spacing: 3) {
@@ -449,6 +466,56 @@ public struct TaskRowView: View {
                     }
                 }
             }
+            
+            // Sub-tasks checklist inside expanded row
+            let subItems = task.checklist
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(subItems) { item in
+                    HStack(spacing: 8) {
+                        Button {
+                            toggleSubItem(item.id)
+                        } label: {
+                            Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 11.5))
+                                .foregroundColor(item.isCompleted ? .green : GrindColors.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        
+                        Text(item.title)
+                            .font(.geist(.regular, size: 12.5))
+                            .foregroundColor(item.isCompleted ? GrindColors.secondary : GrindColors.primary)
+                            .strikethrough(item.isCompleted)
+                        
+                        Spacer()
+                        
+                        Button {
+                            deleteSubItem(item.id)
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 8))
+                                .foregroundColor(GrindColors.secondary.opacity(0.5))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.vertical, 1)
+                }
+                
+                HStack(spacing: 6) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 9))
+                        .foregroundColor(GrindColors.secondary)
+                    TextField("Add sub-task...", text: $newSubItemDraft)
+                        .font(.geist(.regular, size: 12))
+                        .textFieldStyle(.plain)
+                        .onSubmit {
+                            addSubItem()
+                        }
+                }
+                .padding(.top, 2)
+            }
+            .padding(8)
+            .background(GrindColors.hair.opacity(0.3))
+            .cornerRadius(6)
             
             // Quick Controls Bar: Reminder Presets + List Switcher + Actions
             HStack(spacing: 6) {
@@ -599,6 +666,35 @@ public struct TaskRowView: View {
             ReminderService.shared.scheduleReminder(for: task)
             DataStore.shared.refreshTrigger = UUID()
         }
+    }
+    
+    private func toggleSubItem(_ id: UUID) {
+        var items = task.checklist
+        if let idx = items.firstIndex(where: { $0.id == id }) {
+            items[idx].isCompleted.toggle()
+            task.checklist = items
+            try? DataStore.shared.context.save()
+            DataStore.shared.reloadAll()
+        }
+    }
+    
+    private func deleteSubItem(_ id: UUID) {
+        var items = task.checklist
+        items.removeAll(where: { $0.id == id })
+        task.checklist = items
+        try? DataStore.shared.context.save()
+        DataStore.shared.reloadAll()
+    }
+    
+    private func addSubItem() {
+        let trimmed = newSubItemDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        var items = task.checklist
+        items.append(ChecklistItem(title: trimmed))
+        task.checklist = items
+        newSubItemDraft = ""
+        try? DataStore.shared.context.save()
+        DataStore.shared.reloadAll()
     }
     
     private func clearReminder() {

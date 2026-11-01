@@ -11,6 +11,8 @@ public struct TaskEditorSheet: View {
     @State private var hasReminder: Bool = false
     @State private var reminderDate: Date = Date().addingTimeInterval(3600)
     @State private var selectedRecurrence: String = ""
+    @State private var checklistItems: [ChecklistItem] = []
+    @State private var newChecklistTitle: String = ""
     
     public init(task: TodoTask) {
         self.task = task
@@ -131,6 +133,71 @@ public struct TaskEditorSheet: View {
                         .pickerStyle(.menu)
                     }
                     
+                    // Sub-tasks / Checklist Section
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("CHECKLIST")
+                                .font(.geist(.medium, size: 11))
+                                .foregroundColor(GrindColors.secondary)
+                                .tracking(0.5)
+                            Spacer()
+                            if !checklistItems.isEmpty {
+                                let done = checklistItems.filter(\.isCompleted).count
+                                Text("\(done)/\(checklistItems.count)")
+                                    .font(.geist(.mono, size: 11))
+                                    .foregroundColor(GrindColors.secondary)
+                            }
+                        }
+                        
+                        ForEach($checklistItems) { $item in
+                            HStack(spacing: 8) {
+                                Button {
+                                    item.isCompleted.toggle()
+                                } label: {
+                                    Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
+                                        .font(.system(size: 13))
+                                        .foregroundColor(item.isCompleted ? .green : GrindColors.secondary)
+                                }
+                                .buttonStyle(.plain)
+                                
+                                TextField("Sub-task", text: $item.title)
+                                    .font(.geist(.regular, size: 13))
+                                    .textFieldStyle(.plain)
+                                    .strikethrough(item.isCompleted)
+                                
+                                Button {
+                                    checklistItems.removeAll(where: { $0.id == item.id })
+                                } label: {
+                                    Image(systemName: "xmark")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(GrindColors.secondary.opacity(0.6))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(.vertical, 3)
+                        }
+                        
+                        HStack(spacing: 8) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 11))
+                                .foregroundColor(GrindColors.secondary)
+                            TextField("Add sub-task...", text: $newChecklistTitle)
+                                .font(.geist(.regular, size: 13))
+                                .textFieldStyle(.plain)
+                                .onSubmit {
+                                    let trimmed = newChecklistTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+                                    if !trimmed.isEmpty {
+                                        checklistItems.append(ChecklistItem(title: trimmed))
+                                        newChecklistTitle = ""
+                                    }
+                                }
+                        }
+                        .padding(.top, 4)
+                    }
+                    .padding(10)
+                    .background(GrindColors.hair.opacity(0.3))
+                    .cornerRadius(8)
+                    
                     // Notes Editor
                     VStack(alignment: .leading, spacing: 6) {
                         Text("NOTES & LINKS")
@@ -172,6 +239,7 @@ public struct TaskEditorSheet: View {
             selectedList = task.list
             selectedStatus = task.status
             selectedRecurrence = task.recurrenceRule ?? ""
+            checklistItems = task.checklist
             if let date = task.reminderDate {
                 hasReminder = true
                 reminderDate = date
@@ -186,6 +254,7 @@ public struct TaskEditorSheet: View {
         task.list = selectedList
         task.status = selectedStatus
         task.recurrenceRule = selectedRecurrence.isEmpty ? nil : selectedRecurrence
+        task.checklist = checklistItems
         let newReminder = hasReminder ? reminderDate : nil
         task.reminderDate = newReminder
         
