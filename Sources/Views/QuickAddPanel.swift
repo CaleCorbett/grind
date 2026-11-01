@@ -157,6 +157,22 @@ public struct QuickAddPanel: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     .transition(.scale.combined(with: .opacity))
                 }
+                
+                // Parsed Recurrence Chip
+                if let rule = parsed.recurrenceRule {
+                    HStack(spacing: 4) {
+                        Image(systemName: "repeat")
+                            .font(.system(size: 10))
+                        Text(RecurrenceService.displayString(for: rule))
+                            .font(.geist(.mono, size: 11))
+                    }
+                    .foregroundColor(GrindColors.primary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(GrindColors.hair)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .transition(.scale.combined(with: .opacity))
+                }
             }
             
             // Footer Info
@@ -238,7 +254,8 @@ public struct QuickAddPanel: View {
             title: trimmed,
             to: target,
             reminderDate: parsed.reminderDate,
-            isEvening: parsed.isEvening
+            isEvening: parsed.isEvening,
+            recurrenceRule: parsed.recurrenceRule
         )
         SoundManager.shared.play(.notification)
         UndoToastManager.shared.showInfo("Added to \(target.title) · “\(trimmed)”", targetList: target)

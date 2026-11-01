@@ -85,8 +85,9 @@ struct GrindApp: App {
             let list = TaskListType(rawValue: listParam) ?? .today
             let notes = queryItems.first(where: { $0.name == "notes" })?.value
             let evening = queryItems.first(where: { $0.name == "evening" })?.value?.lowercased() == "true"
+            let recurrence = queryItems.first(where: { $0.name == "repeat" || $0.name == "recurrence" })?.value
             
-            store.addTask(title: title, to: list, notes: notes, isEvening: evening)
+            store.addTask(title: title, to: list, notes: notes, isEvening: evening, recurrenceRule: recurrence)
             UndoToastManager.shared.showInfo("Added via URL: “\(title)”", targetList: list)
             
         case "show":

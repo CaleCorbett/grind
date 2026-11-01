@@ -204,6 +204,26 @@ struct SmokeTestRunner {
         check(!store.carryoverTodayTasks.contains(where: { $0.id == carryoverTask.id }), "keepTasksInToday updates lastTouchedDate and clears task from carryover list")
         store.deleteTask(carryoverTask)
 
+        // Recurring Task Automated Re-spawning test
+        let recurringTask = TodoTask(
+            title: "Daily Standup Routine",
+            list: .today,
+            status: .incomplete,
+            recurrenceRule: "daily"
+        )
+        store.context.insert(recurringTask)
+        try? store.context.save()
+        store.reloadAll()
+        let initialNextCount = store.nextTasks.count
+        store.toggleTaskStatus(recurringTask) // becomes .inProgress
+        store.toggleTaskStatus(recurringTask) // becomes .completed -> triggers handleTaskCompletionRecurrence
+        check(recurringTask.status == .completed, "Recurring task marked .completed")
+        check(store.nextTasks.count == initialNextCount + 1, "Automated re-spawning created next instance in Next list (got \(store.nextTasks.count))")
+        let spawned = store.nextTasks.first(where: { $0.title == "Daily Standup Routine" && $0.id != recurringTask.id })
+        check(spawned != nil && spawned?.recurrenceRule == "daily", "Spawned instance retains title and recurrenceRule 'daily'")
+        if let s = spawned { store.deleteTask(s) }
+        store.deleteTask(recurringTask)
+
         // ----------------------------------------------------
         // TEST 3: QuickAddParser Edge Cases & Performance Guard
         // ----------------------------------------------------
@@ -221,6 +241,13 @@ struct SmokeTestRunner {
 
         let datedParsed = QuickAddParser.parse("Dentist appointment tomorrow 3pm")
         check(datedParsed.reminderDate != nil && datedParsed.targetList == .next, "'Dentist appointment tomorrow 3pm' extracts reminderDate and routes to .next")
+
+        let recurringParsed = QuickAddParser.parse("Team sync every weekday 9am")
+        check(recurringParsed.recurrenceRule == "weekdays", "'Team sync every weekday 9am' parses recurrenceRule as 'weekdays' (got '\(recurringParsed.recurrenceRule ?? "nil")')")
+        check(recurringParsed.cleanTitle == "Team sync", "'Team sync every weekday 9am' strips recurrence from cleanTitle (got '\(recurringParsed.cleanTitle)')")
+
+        let monthlyParsed = QuickAddParser.parse("Pay rent monthly")
+        check(monthlyParsed.recurrenceRule == "monthly" && monthlyParsed.cleanTitle == "Pay rent", "'Pay rent monthly' parses recurrenceRule as 'monthly'")
 
         let hugeInput = String(repeating: "very long task description word ", count: 500) + "someday"
         let startHuge = CFAbsoluteTimeGetCurrent()
