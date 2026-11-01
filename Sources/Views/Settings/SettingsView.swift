@@ -109,6 +109,11 @@ public struct SettingsView: View {
                 Text("Length of timed focus sessions launched from to-do rows or the ⌘K command palette.")
                     .font(.caption)
                     .foregroundColor(GrindColors.secondary)
+                
+                Toggle("Show Today's Calendar Peek", isOn: $settings.showCalendarPeekInToday)
+                Text("Displays a non-intrusive strip of today's calendar events above your tasks.")
+                    .font(.caption)
+                    .foregroundColor(GrindColors.secondary)
             }
             
             Section("Appearance") {

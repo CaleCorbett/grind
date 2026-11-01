@@ -24,6 +24,7 @@ public struct TaskListCardView: View {
     let onOpenFreshStart: (() -> Void)?
     let onOpenStaleReview: (() -> Void)?
     
+    @ObservedObject private var calendarPeek = CalendarPeekService.shared
     @State private var newTodoText: String = ""
     @State private var isTargetedForDrop = false
     @State private var isSelectionModeActive = false
@@ -116,6 +117,12 @@ public struct TaskListCardView: View {
             
             Divider()
                 .background(GrindColors.hair)
+            
+            // Calendar Events Peek Strip (Today card)
+            if listType == .today && AppSettings.shared.showCalendarPeekInToday && !calendarPeek.todayEvents.isEmpty {
+                calendarStripView
+                    .padding(.top, 8)
+            }
             
             // Task List Content
             if tasks.isEmpty {
@@ -615,6 +622,37 @@ public struct TaskListCardView: View {
                 .strokeBorder(GrindColors.cardBorder, lineWidth: 1)
         )
         .padding(.bottom, 10)
+    }
+    
+    // MARK: - Calendar Events Strip Peek
+    
+    private var calendarStripView: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(calendarPeek.todayEvents) { event in
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(event.isNow ? Color.orange : GrindColors.secondary.opacity(0.6))
+                            .frame(width: 6, height: 6)
+                        
+                        Text(event.formattedTime)
+                            .font(.geist(.mono, size: 10.5))
+                            .foregroundColor(event.isNow ? .orange : GrindColors.secondary)
+                        
+                        Text(event.title)
+                            .font(.geist(.medium, size: 12))
+                            .foregroundColor(GrindColors.primary)
+                            .lineLimit(1)
+                    }
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
+                    .background(GrindColors.hair.opacity(0.35))
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                }
+            }
+            .padding(.bottom, 6)
+            .padding(.horizontal, 2)
+        }
     }
     
     // MARK: - Empty State

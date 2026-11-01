@@ -152,6 +152,14 @@ public final class AppSettings: ObservableObject {
         }
     }
     
+    public var showCalendarPeekInToday: Bool {
+        willSet { if newValue != showCalendarPeekInToday { objectWillChange.send() } }
+        didSet {
+            guard oldValue != showCalendarPeekInToday else { return }
+            UserDefaults.standard.set(showCalendarPeekInToday, forKey: "showCalendarPeekInToday")
+        }
+    }
+    
     public static let streakDateFormatter: DateFormatter = {
         let df = DateFormatter()
         df.dateFormat = "yyyy-MM-dd"
@@ -215,6 +223,7 @@ public final class AppSettings: ObservableObject {
         self.lastFreshStartDateString = d.string(forKey: "lastFreshStartDateString")
         self.freshStartRitualEnabled = d.object(forKey: "freshStartRitualEnabled") as? Bool ?? true
         self.focusDurationMinutes = d.object(forKey: "focusDurationMinutes") as? Int ?? 25
+        self.showCalendarPeekInToday = d.object(forKey: "showCalendarPeekInToday") as? Bool ?? true
     }
     
     public var preferredColorScheme: ColorScheme? {
