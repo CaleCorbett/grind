@@ -28,7 +28,7 @@ struct SmokeTestRunner {
     }
 
     @MainActor
-    static func main() {
+    static func main() async {
         print("====================================================")
         print("🧪 GRIND AUTOMATED SMOKE TEST SUITE")
         print("====================================================")
@@ -293,6 +293,21 @@ struct SmokeTestRunner {
         let servicesAddedTask = store.todayTasks.first(where: { $0.title == "Read article" })
         check(servicesAddedTask != nil && servicesAddedTask?.isEvening == true, "ServicesProvider parses 'tonight' correctly")
         if let t = servicesAddedTask { store.deleteTask(t) }
+
+        // App Intents & Shortcuts test
+        let addIntent = AddTaskIntent(title: "Intent Created Task", listName: "today")
+        _ = try? await addIntent.perform()
+        check(store.todayTasks.contains(where: { $0.title == "Intent Created Task" }), "AddTaskIntent inserts task into DataStore")
+
+        let getTodayIntent = GetTodayTasksIntent()
+        let getResult = try? await getTodayIntent.perform()
+        check(getResult?.value?.contains("Intent Created Task") == true, "GetTodayTasksIntent returns list containing new task")
+
+        let toggleIntent = ToggleTaskIntent(taskTitle: "Intent Created Task")
+        _ = try? await toggleIntent.perform()
+        let matchingTask = store.todayTasks.first(where: { $0.title == "Intent Created Task" })
+        check(matchingTask?.status == .inProgress || matchingTask?.status == .completed, "ToggleTaskIntent modifies task status")
+        if let t = matchingTask { store.deleteTask(t) }
 
         // ----------------------------------------------------
         // TEST 4: AutoMoveService Daily Sweep
