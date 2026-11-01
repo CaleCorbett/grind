@@ -265,6 +265,30 @@ struct SmokeTestRunner {
         check(focusTask.focusSecondsLogged == 25 * 60, "completeSession logs 1500 focusSecondsLogged (got \(focusTask.focusSecondsLogged))")
         store.deleteTask(focusTask)
 
+        // Sub-Checklists test
+        let checklistTask = TodoTask(title: "Task with Sub-Checklist", list: .today, status: .incomplete)
+        checklistTask.checklist = [
+            ChecklistItem(title: "Step 1", isCompleted: false),
+            ChecklistItem(title: "Step 2", isCompleted: false)
+        ]
+        store.context.insert(checklistTask)
+        try? store.context.save()
+        store.reloadAll()
+
+        check(checklistTask.checklist.count == 2, "Task contains 2 checklist items")
+        check(checklistTask.checklistSummary?.completed == 0, "Initial checklist summary has 0 completed")
+        check(checklistTask.checklistSummary?.total == 2, "Initial checklist summary has 2 total")
+
+        var items = checklistTask.checklist
+        items[0].isCompleted = true
+        checklistTask.checklist = items
+        try? store.context.save()
+        store.reloadAll()
+
+        check(checklistTask.checklistSummary?.completed == 1, "After toggle, checklist summary reports 1 completed")
+        check(checklistTask.checklist[0].isCompleted, "First checklist item is completed")
+        store.deleteTask(checklistTask)
+
         // ----------------------------------------------------
         // TEST 3: QuickAddParser Edge Cases & Performance Guard
         // ----------------------------------------------------
