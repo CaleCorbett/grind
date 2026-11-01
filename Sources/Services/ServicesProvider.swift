@@ -6,8 +6,10 @@ public final class ServicesProvider: NSObject {
     public static let shared = ServicesProvider()
     
     public func registerServices() {
-        NSApp.servicesProvider = self
-        NSUpdateDynamicServices()
+        DispatchQueue.main.async {
+            NSApplication.shared.servicesProvider = self
+            NSUpdateDynamicServices()
+        }
     }
     
     @objc public func handleSendToGrindService(_ pboard: NSPasteboard, userData: String?, error: AutoreleasingUnsafeMutablePointer<NSString?>?) {
@@ -35,3 +37,4 @@ public final class ServicesProvider: NSObject {
         }
     }
 }
+

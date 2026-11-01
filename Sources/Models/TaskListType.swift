@@ -1,6 +1,6 @@
 import Foundation
 
-public enum TaskListType: String, Codable, CaseIterable, Identifiable {
+public enum TaskListType: String, Codable, CaseIterable, Identifiable, Sendable {
     case today = "today"
     case next = "next"
     case someday = "someday"
