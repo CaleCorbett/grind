@@ -5,6 +5,7 @@ import SwiftData
 struct GrindApp: App {
     @ObservedObject private var settings = AppSettings.shared
     @ObservedObject private var store = DataStore.shared
+    @ObservedObject private var focusTimer = FocusTimerService.shared
     @StateObject private var hotKey = GlobalHotKeyManager.shared
     
     init() {
@@ -43,14 +44,25 @@ struct GrindApp: App {
         }
         
         // macOS Menu Bar Extra
-        MenuBarExtra("Grind", systemImage: menuBarSystemImage, isInserted: menuBarInsertedBinding) {
+        MenuBarExtra(menuBarTitle, systemImage: menuBarSystemImage, isInserted: menuBarInsertedBinding) {
             MenuBarTodayView()
                 .modelContainer(DataStore.shared.container)
         }
         .menuBarExtraStyle(.window)
     }
     
+    private var menuBarTitle: String {
+        if focusTimer.isRunning {
+            return focusTimer.formattedRemainingTime
+        }
+        return "Grind"
+    }
+    
     private var menuBarSystemImage: String {
+        if focusTimer.isRunning {
+            return "timer"
+        }
+        
         let count: Int
         switch settings.menuBarBadge {
         case "total":

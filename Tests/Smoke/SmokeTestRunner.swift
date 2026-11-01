@@ -243,6 +243,28 @@ struct SmokeTestRunner {
         check(!staleTask.isStaleSomeday, "touchTasks updates lastTouchedDate and clears stale status")
         store.deleteTask(staleTask)
 
+        // Focus Timer (Pomodoro) test
+        let focusTask = TodoTask(title: "Deep Work Task", list: .today, status: .incomplete)
+        store.context.insert(focusTask)
+        try? store.context.save()
+        store.reloadAll()
+
+        FocusTimerService.shared.startTimer(for: focusTask, durationMinutes: 25)
+        check(FocusTimerService.shared.isRunning, "FocusTimerService.shared.isRunning is true after start")
+        check(FocusTimerService.shared.activeTaskID == focusTask.id, "FocusTimerService tracks activeTaskID")
+        check(focusTask.status == .inProgress, "startTimer transitions task to .inProgress")
+        check(FocusTimerService.shared.formattedRemainingTime == "25:00", "Initial remaining time is 25:00")
+
+        FocusTimerService.shared.pauseTimer()
+        check(FocusTimerService.shared.isPaused, "pauseTimer pauses focus session")
+        FocusTimerService.shared.resumeTimer()
+        check(!FocusTimerService.shared.isPaused, "resumeTimer resumes focus session")
+
+        FocusTimerService.shared.completeSession()
+        check(!FocusTimerService.shared.isRunning, "completeSession marks isRunning as false")
+        check(focusTask.focusSecondsLogged == 25 * 60, "completeSession logs 1500 focusSecondsLogged (got \(focusTask.focusSecondsLogged))")
+        store.deleteTask(focusTask)
+
         // ----------------------------------------------------
         // TEST 3: QuickAddParser Edge Cases & Performance Guard
         // ----------------------------------------------------

@@ -709,6 +709,15 @@ public struct MainView: View {
         switch actionId {
         case "new_task":
             withAnimation(GrindTheme.easeSpring) { isShowingQuickAdd = true }
+        case "start_focus":
+            let targetTask = selectedTasks.first ?? store.todayTasks.first(where: { $0.status == .inProgress }) ?? store.todayTasks.first
+            if let task = targetTask {
+                FocusTimerService.shared.startTimer(for: task)
+            } else {
+                UndoToastManager.shared.showInfo("No to-dos in Today to focus on.")
+            }
+        case "stop_focus":
+            FocusTimerService.shared.stopTimer(logElapsed: true)
         case "focus_today":
             withAnimation(GrindTheme.easeSpring) { focusedList = .today; activeList = .today }
         case "focus_next":

@@ -28,6 +28,9 @@ public struct CommandPaletteView: View {
     private var baseActions: [PaletteItemType] {
         [
             .action(id: "new_task", title: "New To-Do", subtitle: "Summon Quick-Add capture", icon: "plus.circle.fill", shortcut: "⌘N"),
+            FocusTimerService.shared.isRunning
+                ? .action(id: "stop_focus", title: "Stop Active Focus Timer (\(FocusTimerService.shared.formattedRemainingTime))", subtitle: "End focus session and log elapsed time", icon: "stop.circle.fill", shortcut: nil)
+                : .action(id: "start_focus", title: "Start Focus Session (\(AppSettings.shared.focusDurationMinutes)m)", subtitle: "Launch Pomodoro timer on first in-progress or selected task", icon: "timer", shortcut: nil),
             .action(id: "focus_today", title: "Focus Today", subtitle: "Zoom into today's list", icon: "sun.max.fill", shortcut: "⌘1"),
             .action(id: "focus_next", title: "Focus Next", subtitle: "Zoom into upcoming list", icon: "arrow.right.circle.fill", shortcut: "⌘2"),
             .action(id: "focus_someday", title: "Focus Someday", subtitle: "Zoom into aspirational list", icon: "sparkles", shortcut: "⌘3"),

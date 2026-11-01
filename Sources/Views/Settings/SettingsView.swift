@@ -99,6 +99,16 @@ public struct SettingsView: View {
                 Text("Prompts you on the first launch of each day to triage yesterday's unfinished to-dos.")
                     .font(.caption)
                     .foregroundColor(GrindColors.secondary)
+                
+                Picker("Default Focus Session", selection: $settings.focusDurationMinutes) {
+                    Text("15 minutes (Sprint)").tag(15)
+                    Text("25 minutes (Pomodoro)").tag(25)
+                    Text("45 minutes (Deep Work)").tag(45)
+                    Text("60 minutes (Power Hour)").tag(60)
+                }
+                Text("Length of timed focus sessions launched from to-do rows or the ⌘K command palette.")
+                    .font(.caption)
+                    .foregroundColor(GrindColors.secondary)
             }
             
             Section("Appearance") {
