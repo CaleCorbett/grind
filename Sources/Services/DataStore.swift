@@ -188,7 +188,8 @@ public final class DataStore: ObservableObject {
         notes: String? = nil,
         reminderDate: Date? = nil,
         isEvening: Bool = false,
-        recurrenceRule: String? = nil
+        recurrenceRule: String? = nil,
+        checklistJSON: String? = nil
     ) {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
@@ -206,7 +207,8 @@ public final class DataStore: ObservableObject {
             reminderDate: reminderDate,
             orderIndex: order,
             recurrenceRule: recurrenceRule,
-            isEvening: isEvening
+            isEvening: isEvening,
+            checklistJSON: checklistJSON
         )
         context.insert(task)
         try? context.save()

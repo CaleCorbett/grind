@@ -309,6 +309,52 @@ struct SmokeTestRunner {
         check(matchingTask?.status == .inProgress || matchingTask?.status == .completed, "ToggleTaskIntent modifies task status")
         if let t = matchingTask { store.deleteTask(t) }
 
+        // Reminders & Things 3 Importer test
+        let sampleThingsJSON = """
+        [
+          {
+            "type": "to-do",
+            "attributes": {
+              "title": "Imported Things Task",
+              "notes": "Important note",
+              "when": "today",
+              "checklist-items": [
+                { "attributes": { "title": "Subitem 1" } }
+              ]
+            }
+          },
+          {
+            "title": "Imported Generic Task",
+            "list": "someday"
+          }
+        ]
+        """.data(using: .utf8)!
+        let parsedJSONItems = (try? RemindersImporterService.shared.parseThingsJSON(sampleThingsJSON)) ?? []
+        check(parsedJSONItems.count == 2, "RemindersImporterService.parseThingsJSON parses 2 items (got \(parsedJSONItems.count))")
+        check(parsedJSONItems[0].targetList == .today, "First parsed item routes to .today")
+        check(parsedJSONItems[0].checklistItems.contains("Subitem 1"), "First parsed item contains checklist items")
+
+        let markdownTasks = """
+        - [ ] Buy groceries tomorrow
+        - Research quantum computing someday
+        """
+        let parsedMarkdown = RemindersImporterService.shared.parsePlainTextTasks(markdownTasks)
+        check(parsedMarkdown.count == 2, "RemindersImporterService.parsePlainTextTasks parses 2 items")
+        check(parsedMarkdown[1].targetList == .someday, "Markdown task with 'someday' routes to .someday")
+
+        let initialTodayCount = store.todayTasks.count
+        let countImported = RemindersImporterService.shared.importItems(parsedJSONItems, store: store, skipDuplicates: true)
+        check(countImported == 2, "importItems imports 2 items (got \(countImported))")
+        check(store.todayTasks.count == initialTodayCount + 1, "Today tasks count increased by 1")
+
+        // Duplicate prevention
+        let dupeCount = RemindersImporterService.shared.importItems(parsedJSONItems, store: store, skipDuplicates: true)
+        check(dupeCount == 0, "Duplicate import with skipDuplicates=true imports 0 items (got \(dupeCount))")
+
+        // Cleanup imported tasks
+        if let t1 = store.todayTasks.first(where: { $0.title == "Imported Things Task" }) { store.deleteTask(t1) }
+        if let t2 = store.somedayTasks.first(where: { $0.title == "Imported Generic Task" }) { store.deleteTask(t2) }
+
         // ----------------------------------------------------
         // TEST 4: AutoMoveService Daily Sweep
         // ----------------------------------------------------

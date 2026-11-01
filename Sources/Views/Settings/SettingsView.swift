@@ -2,6 +2,7 @@ import SwiftUI
 
 public struct SettingsView: View {
     @ObservedObject private var settings = AppSettings.shared
+    @State private var showImportSheet = false
     
     public init() {}
     
@@ -25,6 +26,11 @@ public struct SettingsView: View {
             menuBarTab
                 .tabItem {
                     Label("Menu Bar", systemImage: "menubar.rectangle")
+                }
+            
+            importTab
+                .tabItem {
+                    Label("Import", systemImage: "arrow.down.doc")
                 }
             
             aboutTab
@@ -190,6 +196,34 @@ public struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+    
+    // MARK: - Import Tab
+    private var importTab: some View {
+        Form {
+            Section("Migration & External To-Dos") {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Import from Apple Reminders or Things 3")
+                        .font(.geist(.medium, size: 13))
+                        .foregroundColor(GrindColors.primary)
+                    Text("Seamlessly bring existing incomplete tasks, reminders, and checklists into Grind's Today, Next, or Someday lists.")
+                        .font(.caption)
+                        .foregroundColor(GrindColors.secondary)
+                }
+                .padding(.vertical, 4)
+                
+                Button {
+                    showImportSheet = true
+                } label: {
+                    Label("Open Import Assistant…", systemImage: "arrow.down.doc")
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .formStyle(.grouped)
+        .sheet(isPresented: $showImportSheet) {
+            ImportTasksSheet()
+        }
     }
     
     // MARK: - About Tab
