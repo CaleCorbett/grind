@@ -22,6 +22,7 @@ public struct TaskListCardView: View {
     let onClearCompleted: (TaskListType) -> Void
     let onToggleFocusCard: (TaskListType) -> Void
     let onOpenFreshStart: (() -> Void)?
+    let onOpenStaleReview: (() -> Void)?
     
     @State private var newTodoText: String = ""
     @State private var isTargetedForDrop = false
@@ -48,7 +49,8 @@ public struct TaskListCardView: View {
         onAddTask: @escaping (String, TaskListType, Date?, Bool, String?) -> Void = { _, _, _, _, _ in },
         onClearCompleted: @escaping (TaskListType) -> Void,
         onToggleFocusCard: @escaping (TaskListType) -> Void = { _ in },
-        onOpenFreshStart: (() -> Void)? = nil
+        onOpenFreshStart: (() -> Void)? = nil,
+        onOpenStaleReview: (() -> Void)? = nil
     ) {
         self.listType = listType
         self.tasks = tasks
@@ -70,6 +72,7 @@ public struct TaskListCardView: View {
         self.onClearCompleted = onClearCompleted
         self.onToggleFocusCard = onToggleFocusCard
         self.onOpenFreshStart = onOpenFreshStart
+        self.onOpenStaleReview = onOpenStaleReview
     }
     
     private var completedCount: Int {
@@ -318,6 +321,32 @@ public struct TaskListCardView: View {
                             .help("Today is carrying \(remaining) to-dos (recommended limit: \(cap)). Consider moving some to Next.")
                         }
                     }
+                } else if listType == .someday {
+                    HStack(spacing: 6) {
+                        Text(listType.subtitle)
+                            .font(.geist(.regular, size: 11))
+                            .foregroundColor(GrindColors.secondary.opacity(0.85))
+                            .lineLimit(1)
+                        
+                        let staleCount = DataStore.shared.staleSomedayTasks.count
+                        if staleCount > 0 {
+                            Button(action: { onOpenStaleReview?() }) {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "hourglass")
+                                        .font(.system(size: 8.5))
+                                    Text("Stale (\(staleCount))")
+                                        .font(.geist(.mono, size: 9.5))
+                                }
+                                .foregroundColor(.purple)
+                                .padding(.horizontal, 5.5)
+                                .padding(.vertical, 1.5)
+                                .background(Color.purple.opacity(0.12))
+                                .clipShape(Capsule())
+                            }
+                            .buttonStyle(.plain)
+                            .help("Review \(staleCount) stale idea\(staleCount == 1 ? "" : "s") untouched for 30+ days")
+                        }
+                    }
                 } else {
                     Text(listType.subtitle)
                         .font(.geist(.regular, size: 11))
@@ -430,6 +459,11 @@ public struct TaskListCardView: View {
                         Divider()
                         Button("Fresh Start Ritual...") {
                             onOpenFreshStart?()
+                        }
+                    } else if listType == .someday {
+                        Divider()
+                        Button("Review Stale Ideas... (\(DataStore.shared.staleSomedayTasks.count))") {
+                            onOpenStaleReview?()
                         }
                     }
                 } label: {

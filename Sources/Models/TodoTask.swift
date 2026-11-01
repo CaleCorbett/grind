@@ -69,4 +69,17 @@ public final class TodoTask: Identifiable {
             }
         }
     }
+    
+    public var isStaleSomeday: Bool {
+        guard list == .someday, status != .completed, !isArchived else { return false }
+        let touchDate = lastTouchedDate ?? creationDate
+        let staleThreshold = Date().addingTimeInterval(-30 * 86400)
+        return touchDate < staleThreshold
+    }
+    
+    public var daysUntouched: Int {
+        let touchDate = lastTouchedDate ?? creationDate
+        let diff = Calendar.current.dateComponents([.day], from: touchDate, to: Date())
+        return max(0, diff.day ?? 0)
+    }
 }

@@ -122,6 +122,20 @@ public final class DataStore: ObservableObject {
         reloadAll()
     }
     
+    public var staleSomedayTasks: [TodoTask] {
+        somedayTasks.filter { $0.isStaleSomeday }
+    }
+    
+    public func touchTasks(_ tasksToTouch: [TodoTask]) {
+        guard !tasksToTouch.isEmpty else { return }
+        let now = Date()
+        for task in tasksToTouch {
+            task.lastTouchedDate = now
+        }
+        try? context.save()
+        reloadAll()
+    }
+    
     private func fetchTasksFromStore(for list: TaskListType, moveCompletedToBottom: Bool) -> [TodoTask] {
         let raw = list.rawValue
         let predicate = #Predicate<TodoTask> { task in
