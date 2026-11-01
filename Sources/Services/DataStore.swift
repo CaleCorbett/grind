@@ -105,6 +105,23 @@ public final class DataStore: ObservableObject {
         self.archivedTasks = fetchedArchived
     }
     
+    public var carryoverTodayTasks: [TodoTask] {
+        let cal = Calendar.current
+        return todayTasks.filter { task in
+            task.status != .completed && !cal.isDateInToday(task.lastTouchedDate ?? task.creationDate)
+        }
+    }
+    
+    public func keepTasksInToday(_ tasksToKeep: [TodoTask]) {
+        guard !tasksToKeep.isEmpty else { return }
+        let now = Date()
+        for task in tasksToKeep {
+            task.lastTouchedDate = now
+        }
+        try? context.save()
+        reloadAll()
+    }
+    
     private func fetchTasksFromStore(for list: TaskListType, moveCompletedToBottom: Bool) -> [TodoTask] {
         let raw = list.rawValue
         let predicate = #Predicate<TodoTask> { task in

@@ -21,6 +21,7 @@ public struct TaskListCardView: View {
     let onAddTask: (String, TaskListType, Date?, Bool) -> Void
     let onClearCompleted: (TaskListType) -> Void
     let onToggleFocusCard: (TaskListType) -> Void
+    let onOpenFreshStart: (() -> Void)?
     
     @State private var newTodoText: String = ""
     @State private var isTargetedForDrop = false
@@ -46,7 +47,8 @@ public struct TaskListCardView: View {
         onBatchDelete: @escaping ([TodoTask]) -> Void = { _ in },
         onAddTask: @escaping (String, TaskListType, Date?, Bool) -> Void = { _, _, _, _ in },
         onClearCompleted: @escaping (TaskListType) -> Void,
-        onToggleFocusCard: @escaping (TaskListType) -> Void = { _ in }
+        onToggleFocusCard: @escaping (TaskListType) -> Void = { _ in },
+        onOpenFreshStart: (() -> Void)? = nil
     ) {
         self.listType = listType
         self.tasks = tasks
@@ -67,6 +69,7 @@ public struct TaskListCardView: View {
         self.onAddTask = onAddTask
         self.onClearCompleted = onClearCompleted
         self.onToggleFocusCard = onToggleFocusCard
+        self.onOpenFreshStart = onOpenFreshStart
     }
     
     private var completedCount: Int {
@@ -279,6 +282,25 @@ public struct TaskListCardView: View {
                             .help("\(streak)-day daily completion streak!")
                         }
                         
+                        let carryover = DataStore.shared.carryoverTodayTasks.count
+                        if carryover > 0 {
+                            Button(action: { onOpenFreshStart?() }) {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "sun.and.horizon.fill")
+                                        .font(.system(size: 8.5))
+                                    Text("Rollover (\(carryover))")
+                                        .font(.geist(.mono, size: 9.5))
+                                }
+                                .foregroundColor(.orange)
+                                .padding(.horizontal, 5.5)
+                                .padding(.vertical, 1.5)
+                                .background(Color.orange.opacity(0.12))
+                                .clipShape(Capsule())
+                            }
+                            .buttonStyle(.plain)
+                            .help("Triage \(carryover) uncompleted to-do\(carryover == 1 ? "" : "s") from previous days")
+                        }
+                        
                         let cap = AppSettings.shared.todayCapLimit
                         let remaining = tasks.filter { $0.status != .completed }.count
                         if cap > 0 && remaining > cap {
@@ -403,6 +425,13 @@ public struct TaskListCardView: View {
                         onClearCompleted(listType)
                     }
                     .disabled(completedCount == 0)
+                    
+                    if listType == .today {
+                        Divider()
+                        Button("Fresh Start Ritual...") {
+                            onOpenFreshStart?()
+                        }
+                    }
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 12, weight: .semibold))

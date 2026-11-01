@@ -128,6 +128,22 @@ public final class AppSettings: ObservableObject {
         }
     }
     
+    public var lastFreshStartDateString: String? {
+        willSet { if newValue != lastFreshStartDateString { objectWillChange.send() } }
+        didSet {
+            guard oldValue != lastFreshStartDateString else { return }
+            UserDefaults.standard.set(lastFreshStartDateString, forKey: "lastFreshStartDateString")
+        }
+    }
+    
+    public var freshStartRitualEnabled: Bool {
+        willSet { if newValue != freshStartRitualEnabled { objectWillChange.send() } }
+        didSet {
+            guard oldValue != freshStartRitualEnabled else { return }
+            UserDefaults.standard.set(freshStartRitualEnabled, forKey: "freshStartRitualEnabled")
+        }
+    }
+    
     public static let streakDateFormatter: DateFormatter = {
         let df = DateFormatter()
         df.dateFormat = "yyyy-MM-dd"
@@ -188,6 +204,8 @@ public final class AppSettings: ObservableObject {
         self.todayCapLimit = d.object(forKey: "todayCapLimit") as? Int ?? 5
         self.completionStreakCount = d.integer(forKey: "completionStreakCount")
         self.lastCompletedDateString = d.string(forKey: "lastCompletedDateString")
+        self.lastFreshStartDateString = d.string(forKey: "lastFreshStartDateString")
+        self.freshStartRitualEnabled = d.object(forKey: "freshStartRitualEnabled") as? Bool ?? true
     }
     
     public var preferredColorScheme: ColorScheme? {

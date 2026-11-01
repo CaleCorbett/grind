@@ -88,6 +88,11 @@ public struct SettingsView: View {
                 Text("Displays a subtle warning badge when Today's incomplete tasks exceed your daily threshold.")
                     .font(.caption)
                     .foregroundColor(GrindColors.secondary)
+                
+                Toggle("Daily Fresh Start Ritual", isOn: $settings.freshStartRitualEnabled)
+                Text("Prompts you on the first launch of each day to triage yesterday's unfinished to-dos.")
+                    .font(.caption)
+                    .foregroundColor(GrindColors.secondary)
             }
             
             Section("Appearance") {
