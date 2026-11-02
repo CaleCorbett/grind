@@ -2,9 +2,16 @@ import SwiftUI
 import SwiftData
 
 public struct ArchiveView: View {
+    public enum ArchiveTab: String, CaseIterable {
+        case logbook = "Logbook"
+        case trash = "Recently Deleted"
+    }
+    
     @ObservedObject private var store = DataStore.shared
     @Environment(\.dismiss) private var dismiss
+    @State private var selectedTab: ArchiveTab = .logbook
     @State private var searchText: String = ""
+    @State private var showEmptyTrashConfirmation = false
     
     public init() {}
     
@@ -13,14 +20,32 @@ public struct ArchiveView: View {
             // Header
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Logbook")
+                    Text(selectedTab == .logbook ? "Logbook" : "Recently Deleted")
                         .font(.geist(.bold, size: 18))
                         .foregroundColor(GrindColors.primary)
-                    Text("Your completed to-dos, organized by day")
+                    Text(selectedTab == .logbook ? "Your completed to-dos, organized by day" : "Safety net for deleted tasks before permanent removal")
                         .font(.geist(.regular, size: 12))
                         .foregroundColor(GrindColors.secondary)
                 }
                 Spacer()
+                
+                if selectedTab == .trash && !store.deletedTasks.isEmpty {
+                    Button("Empty Trash") {
+                        showEmptyTrashConfirmation = true
+                    }
+                    .font(.geist(.medium, size: 12))
+                    .foregroundColor(.red)
+                    .buttonStyle(.bordered)
+                    .confirmationDialog("Empty Trash?", isPresented: $showEmptyTrashConfirmation) {
+                        Button("Empty Trash (\(store.deletedTasks.count) to-dos)", role: .destructive) {
+                            store.emptyTrash()
+                        }
+                        Button("Cancel", role: .cancel) {}
+                    } message: {
+                        Text("This will permanently remove all \(store.deletedTasks.count) deleted to-dos. This action cannot be undone.")
+                    }
+                }
+                
                 Button("Done") {
                     dismiss()
                 }
@@ -30,6 +55,15 @@ public struct ArchiveView: View {
             }
             .padding(18)
             
+            // Tab Selector
+            Picker("View", selection: $selectedTab) {
+                Text("Logbook (\(store.archivedTasks.count))").tag(ArchiveTab.logbook)
+                Text("Trash (\(store.deletedTasks.count))").tag(ArchiveTab.trash)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 18)
+            .padding(.bottom, 10)
+            
             Divider()
                 .background(GrindColors.hair)
             
@@ -37,7 +71,7 @@ public struct ArchiveView: View {
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(GrindColors.secondary)
-                TextField("Search archive...", text: $searchText)
+                TextField(selectedTab == .logbook ? "Search logbook..." : "Search trash...", text: $searchText)
                     .textFieldStyle(.plain)
                     .font(.geist(.regular, size: 14))
                 if !searchText.isEmpty {
@@ -54,7 +88,20 @@ public struct ArchiveView: View {
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
             
-            // Archived Task List / Grouped Logbook
+            if selectedTab == .logbook {
+                logbookView
+            } else {
+                trashView
+            }
+        }
+        .frame(width: 520, height: 500)
+        .background(GrindColors.bg)
+    }
+    
+    // MARK: - Logbook View
+    
+    private var logbookView: some View {
+        Group {
             if archivedTasks.isEmpty {
                 VStack(spacing: 8) {
                     Spacer()
@@ -127,8 +174,99 @@ public struct ArchiveView: View {
                 .listStyle(.plain)
             }
         }
-        .frame(width: 500, height: 480)
-        .background(GrindColors.bg)
+    }
+    
+    // MARK: - Trash View
+    
+    private var trashView: some View {
+        Group {
+            if filteredTrashTasks.isEmpty {
+                VStack(spacing: 8) {
+                    Spacer()
+                    Image(systemName: "trash")
+                        .font(.system(size: 32))
+                        .foregroundColor(GrindColors.secondary.opacity(0.4))
+                    Text(searchText.isEmpty ? "Trash is empty" : "No deleted to-dos match your search")
+                        .font(.geist(.medium, size: 15))
+                        .foregroundColor(GrindColors.secondary)
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity)
+            } else {
+                List {
+                    ForEach(filteredTrashTasks) { task in
+                        HStack(spacing: 10) {
+                            Image(systemName: "trash.circle")
+                                .foregroundColor(.red.opacity(0.7))
+                                .font(.system(size: 16))
+                            
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(task.title)
+                                    .font(.geist(.medium, size: 14))
+                                    .foregroundColor(GrindColors.primary)
+                                
+                                HStack(spacing: 6) {
+                                    Text(task.list.title)
+                                        .font(.geist(.mono, size: 10))
+                                        .padding(.horizontal, 5)
+                                        .padding(.vertical, 1.5)
+                                        .background(GrindColors.hair)
+                                        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                                        .foregroundColor(GrindColors.secondary)
+                                    
+                                    if let delDate = task.deletedDate {
+                                        Text("Deleted \(formatDate(delDate))")
+                                            .font(.geist(.regular, size: 11))
+                                            .foregroundColor(GrindColors.secondary.opacity(0.8))
+                                    }
+                                }
+                            }
+                            
+                            Spacer()
+                            
+                            Button("Restore") {
+                                store.restoreTaskFromTrash(task)
+                            }
+                            .buttonStyle(.plain)
+                            .font(.geist(.medium, size: 12))
+                            .foregroundColor(GrindColors.primary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(GrindColors.hair)
+                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                            
+                            Button(action: {
+                                store.permanentlyDeleteTask(task)
+                            }) {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(GrindColors.secondary.opacity(0.8))
+                                    .padding(6)
+                                    .background(GrindColors.hair.opacity(0.6))
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(.plain)
+                            .help("Permanently delete")
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .onDelete { indices in
+                        for i in indices {
+                            store.permanentlyDeleteTask(filteredTrashTasks[i])
+                        }
+                    }
+                }
+                .listStyle(.plain)
+            }
+        }
+    }
+    
+    private var filteredTrashTasks: [TodoTask] {
+        let tasks = store.deletedTasks
+        if searchText.isEmpty {
+            return tasks
+        }
+        return tasks.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
     }
     
     private struct DayGroup {

@@ -30,7 +30,7 @@ public struct SettingsView: View {
             
             importTab
                 .tabItem {
-                    Label("Import", systemImage: "arrow.down.doc")
+                    Label("Data", systemImage: "externaldrive")
                 }
             
             aboutTab
@@ -45,6 +45,16 @@ public struct SettingsView: View {
     // MARK: - General Tab
     private var generalTab: some View {
         Form {
+            Section("Startup & System") {
+                Toggle("Launch Grind at Login", isOn: Binding(
+                    get: { settings.launchAtLogin },
+                    set: { settings.launchAtLogin = $0 }
+                ))
+                Text("Start Grind automatically in your menu bar when you boot or log into your Mac.")
+                    .font(.caption)
+                    .foregroundColor(GrindColors.secondary)
+            }
+            
             Section("Status Steps") {
                 Toggle("Enable 'In Progress' State", isOn: $settings.allowInProgress)
                 Text("When enabled, checking a to-do cycles: To Do → In Progress (half pie) → Done.")
@@ -233,6 +243,34 @@ public struct SettingsView: View {
                     Label("Open Import Assistant…", systemImage: "arrow.down.doc")
                 }
                 .buttonStyle(.borderedProminent)
+            }
+            
+            Section("Backup & Export") {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Export All To-Dos")
+                        .font(.geist(.medium, size: 13))
+                        .foregroundColor(GrindColors.primary)
+                    Text("Save a complete copy of your to-dos, notes, checklists, and focus history for safekeeping or notes apps.")
+                        .font(.caption)
+                        .foregroundColor(GrindColors.secondary)
+                }
+                .padding(.vertical, 4)
+                
+                HStack(spacing: 12) {
+                    Button {
+                        ExportService.shared.exportMarkdownToFile()
+                    } label: {
+                        Label("Export Markdown…", systemImage: "text.alignleft")
+                    }
+                    .buttonStyle(.bordered)
+                    
+                    Button {
+                        ExportService.shared.exportJSONToFile()
+                    } label: {
+                        Label("Export JSON Backup…", systemImage: "doc.badge.arrow.up")
+                    }
+                    .buttonStyle(.bordered)
+                }
             }
         }
         .formStyle(.grouped)

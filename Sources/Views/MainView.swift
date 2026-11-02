@@ -271,6 +271,9 @@ public struct MainView: View {
                 Button("") { isShowingQuickAdd.toggle() }
                     .keyboardShortcut("n", modifiers: .command)
                 
+                Button("") { ExportService.shared.copyTodayStandupSummaryToClipboard() }
+                    .keyboardShortcut("c", modifiers: [.command, .shift])
+                
                 Button("") {
                     withAnimation(GrindTheme.easeSpring) {
                         isShowingCommandPalette.toggle()
@@ -604,6 +607,25 @@ public struct MainView: View {
                 }
             }
             
+            // Command + Shift + C (keyCode 8) -> Copy Today for Standup
+            if flags == [.command, .shift] && event.keyCode == 8 {
+                ExportService.shared.copyTodayStandupSummaryToClipboard()
+                return nil
+            }
+            
+            // Command + T (keyCode 17) -> Move to Today
+            if flags == .command && event.keyCode == 17 {
+                if moveSelectedTasks(to: .today) { return nil }
+            }
+            // Command + E (keyCode 14) -> Move to Next
+            if flags == .command && event.keyCode == 14 {
+                if moveSelectedTasks(to: .next) { return nil }
+            }
+            // Command + S (keyCode 1) -> Move to Someday
+            if flags == .command && event.keyCode == 1 {
+                if moveSelectedTasks(to: .someday) { return nil }
+            }
+            
             // Only handle unmodified keys below
             guard flags.subtracting([.numericPad, .function]).isEmpty else {
                 return event
@@ -622,6 +644,15 @@ public struct MainView: View {
             case 124, 37: // Right arrow or 'L'
                 navigateHorizontal(direction: 1)
                 return nil
+            case 51: // Backspace -> Delete selected task(s)
+                let batch = selectedTasks
+                if !batch.isEmpty {
+                    selectedTaskIDs.removeAll()
+                    lastSelectedTaskID = nil
+                    expandedTaskID = nil
+                    store.deleteTasks(batch)
+                    return nil
+                }
             case 49: // Space -> Cycle status (single) or batch toggle Done/Reset (multi)
                 let batch = selectedTasks
                 if batch.count == 1, let single = batch.first {
@@ -771,6 +802,12 @@ public struct MainView: View {
             isShowingImport = true
         case "clear_completed":
             store.clearCompleted(in: focusedList ?? activeList)
+        case "copy_standup":
+            ExportService.shared.copyTodayStandupSummaryToClipboard()
+        case "export_markdown":
+            ExportService.shared.exportMarkdownToFile()
+        case "export_json":
+            ExportService.shared.exportJSONToFile()
         case "toggle_theme":
             if settings.appearanceMode == "dark" {
                 settings.appearanceMode = "light"

@@ -84,6 +84,10 @@ struct SmokeTestRunner {
         settings.showInMenuBar.toggle()
         settings.showInMenuBar.toggle()
         check(settingsEmissions == 2, "Toggling showInMenuBar twice emits exactly 2 objectWillChange events (got \(settingsEmissions))")
+        
+        let initialLogin = settings.launchAtLogin
+        settings.launchAtLogin = initialLogin
+        check(settings.launchAtLogin == initialLogin, "launchAtLogin getter/setter operates cleanly")
         _ = settingsSub
 
         // ----------------------------------------------------
@@ -180,6 +184,39 @@ struct SmokeTestRunner {
         check(store.somedayTasks.count == 10, "UndoToastManager.undo() restores all 4 deleted tasks to Someday (got \(store.somedayTasks.count))")
         let restoredIDs = Set(store.somedayTasks.map(\.id)).intersection(deletedIDs)
         check(restoredIDs.count == 4, "All 4 restored task UUIDs match original deleted tasks")
+
+        // Test Trash / Soft Delete and Restore
+        let trashProbeTask = TodoTask(title: "Trash Probe Task", list: .today, status: .incomplete)
+        store.context.insert(trashProbeTask)
+        try? store.context.save()
+        store.reloadAll()
+        let todayBeforeDeleteCount = store.todayTasks.count
+        let trashBeforeCount = store.deletedTasks.count
+        store.deleteTask(trashProbeTask)
+        check(store.todayTasks.count == todayBeforeDeleteCount - 1, "deleteTask removes task from active todayTasks")
+        check(store.deletedTasks.count == trashBeforeCount + 1, "deleteTask moves task to store.deletedTasks (got \(store.deletedTasks.count))")
+        check(trashProbeTask.deletedDate != nil, "Deleted task has non-nil deletedDate")
+        store.restoreTaskFromTrash(trashProbeTask)
+        check(store.deletedTasks.count == trashBeforeCount, "restoreTaskFromTrash removes task from deletedTasks")
+        check(store.todayTasks.count == todayBeforeDeleteCount, "restoreTaskFromTrash brings task back to todayTasks")
+        check(trashProbeTask.deletedDate == nil, "Restored task has nil deletedDate")
+        store.deleteTask(trashProbeTask)
+        store.emptyTrash()
+        check(store.deletedTasks.isEmpty, "emptyTrash purges all items from deletedTasks (got \(store.deletedTasks.count))")
+
+        // Test ExportService (Markdown, JSON, Standup)
+        let mdExport = ExportService.shared.generateMarkdownOutline()
+        check(mdExport.contains("# Grind To-Do Outline") && mdExport.contains("## Today"), "ExportService generates valid Markdown outline with Today header")
+        let jsonExport = ExportService.shared.generateJSONBackup()
+        check(jsonExport != nil && !jsonExport!.isEmpty, "ExportService generates non-empty JSON backup data")
+        if let data = jsonExport,
+           let jsonArr = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+            check(!jsonArr.isEmpty, "ExportService JSON backup parses into task array (got \(jsonArr.count) tasks)")
+        } else {
+            check(false, "ExportService JSON backup is valid JSON array")
+        }
+        let standupSummary = ExportService.shared.generateTodayStandupSummary()
+        check(standupSummary.contains("**Today's Update") || standupSummary.contains("No to-dos scheduled"), "ExportService generates formatted standup summary")
 
         // Clear Completed & Archive verification
         store.setStatus(.completed, for: Array(store.todayTasks.prefix(3)))

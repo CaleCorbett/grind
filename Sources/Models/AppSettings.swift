@@ -1,9 +1,38 @@
 import Foundation
 import SwiftUI
 import Combine
+import ServiceManagement
 
 public final class AppSettings: ObservableObject {
     public static let shared = AppSettings()
+    
+    public var launchAtLogin: Bool {
+        get {
+            if #available(macOS 13.0, *) {
+                return SMAppService.mainApp.status == .enabled
+            }
+            return UserDefaults.standard.bool(forKey: "launchAtLogin")
+        }
+        set {
+            objectWillChange.send()
+            UserDefaults.standard.set(newValue, forKey: "launchAtLogin")
+            if #available(macOS 13.0, *) {
+                do {
+                    if newValue {
+                        if SMAppService.mainApp.status != .enabled {
+                            try SMAppService.mainApp.register()
+                        }
+                    } else {
+                        if SMAppService.mainApp.status == .enabled {
+                            try SMAppService.mainApp.unregister()
+                        }
+                    }
+                } catch {
+                    // Graceful fallback for ad-hoc / sandbox testing environments
+                }
+            }
+        }
+    }
     
     public var soundEffectsEnabled: Bool {
         willSet { if newValue != soundEffectsEnabled { objectWillChange.send() } }

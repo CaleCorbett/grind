@@ -14,6 +14,7 @@ public final class DataStore: ObservableObject {
     public private(set) var nextTasks: [TodoTask] = []
     public private(set) var somedayTasks: [TodoTask] = []
     public private(set) var archivedTasks: [TodoTask] = []
+    public private(set) var deletedTasks: [TodoTask] = []
     public private(set) var todayRemainingCount: Int = 0
     public private(set) var todayTotalCount: Int = 0
     
@@ -90,11 +91,19 @@ public final class DataStore: ObservableObject {
         
         let archiveDesc = FetchDescriptor<TodoTask>(
             predicate: #Predicate<TodoTask> { task in
-                task.isArchived || task.rawStatus == 2
+                (task.isArchived || task.rawStatus == 2) && task.deletedDate == nil
             },
             sortBy: [SortDescriptor(\.completionDate, order: .reverse)]
         )
         let fetchedArchived = (try? context.fetch(archiveDesc)) ?? []
+        
+        let trashDesc = FetchDescriptor<TodoTask>(
+            predicate: #Predicate<TodoTask> { task in
+                task.deletedDate != nil
+            },
+            sortBy: [SortDescriptor(\.deletedDate, order: .reverse)]
+        )
+        let fetchedTrash = (try? context.fetch(trashDesc)) ?? []
         
         objectWillChange.send()
         self.todayTasks = fetchedToday
@@ -103,6 +112,7 @@ public final class DataStore: ObservableObject {
         self.todayTotalCount = fetchedToday.count
         self.todayRemainingCount = fetchedToday.filter { $0.status != .completed }.count
         self.archivedTasks = fetchedArchived
+        self.deletedTasks = fetchedTrash
     }
     
     public var carryoverTodayTasks: [TodoTask] {
@@ -139,7 +149,7 @@ public final class DataStore: ObservableObject {
     private func fetchTasksFromStore(for list: TaskListType, moveCompletedToBottom: Bool) -> [TodoTask] {
         let raw = list.rawValue
         let predicate = #Predicate<TodoTask> { task in
-            task.rawList == raw && !task.isArchived
+            task.rawList == raw && !task.isArchived && task.deletedDate == nil
         }
         var descriptor = FetchDescriptor<TodoTask>(predicate: predicate)
         descriptor.sortBy = [SortDescriptor(\.orderIndex, order: .forward)]
@@ -167,7 +177,7 @@ public final class DataStore: ObservableObject {
         }
         let raw = list.rawValue
         let predicate = #Predicate<TodoTask> { task in
-            task.rawList == raw
+            task.rawList == raw && task.deletedDate == nil
         }
         var descriptor = FetchDescriptor<TodoTask>(predicate: predicate)
         descriptor.sortBy = [SortDescriptor(\.orderIndex, order: .forward)]
@@ -290,7 +300,7 @@ public final class DataStore: ObservableObject {
     public func deleteTask(_ task: TodoTask) {
         ReminderService.shared.cancelReminder(for: task)
         UndoToastManager.shared.recordDeletion(of: task)
-        context.delete(task)
+        task.deletedDate = Date()
         try? context.save()
         SoundManager.shared.play(.deleted)
         reloadAll()
@@ -300,11 +310,45 @@ public final class DataStore: ObservableObject {
         guard !tasksToDelete.isEmpty else { return }
         ReminderService.shared.cancelReminders(for: tasksToDelete)
         UndoToastManager.shared.recordDeletion(of: tasksToDelete)
+        let now = Date()
         for task in tasksToDelete {
-            context.delete(task)
+            task.deletedDate = now
         }
         try? context.save()
         SoundManager.shared.play(tasksToDelete.count > 1 ? .allDeleted : .deleted)
+        reloadAll()
+    }
+    
+    public func restoreTaskFromTrash(_ task: TodoTask) {
+        task.deletedDate = nil
+        task.lastTouchedDate = Date()
+        if task.reminderDate != nil {
+            ReminderService.shared.scheduleReminder(for: task)
+        }
+        try? context.save()
+        SoundManager.shared.play(.notification)
+        UndoToastManager.shared.showInfo("Restored “\(task.title)” to \(task.list.title)")
+        reloadAll()
+    }
+    
+    public func permanentlyDeleteTask(_ task: TodoTask) {
+        ReminderService.shared.cancelReminder(for: task)
+        context.delete(task)
+        try? context.save()
+        SoundManager.shared.play(.deleted)
+        reloadAll()
+    }
+    
+    public func emptyTrash() {
+        guard !deletedTasks.isEmpty else { return }
+        let count = deletedTasks.count
+        ReminderService.shared.cancelReminders(for: deletedTasks)
+        for task in deletedTasks {
+            context.delete(task)
+        }
+        try? context.save()
+        SoundManager.shared.play(.allDeleted)
+        UndoToastManager.shared.showInfo("Emptied trash (\(count) to-dos permanently deleted)")
         reloadAll()
     }
     

@@ -81,18 +81,26 @@ public final class UndoToastManager: ObservableObject {
         guard !lastDeletedBatch.isEmpty else { return }
         
         for snapshot in lastDeletedBatch {
-            let restored = TodoTask(
-                id: snapshot.id,
-                title: snapshot.title,
-                list: snapshot.list,
-                status: snapshot.status,
-                notes: snapshot.notes,
-                reminderDate: snapshot.reminderDate,
-                orderIndex: snapshot.orderIndex
-            )
-            DataStore.shared.context.insert(restored)
-            if restored.reminderDate != nil {
-                ReminderService.shared.scheduleReminder(for: restored)
+            if let existing = DataStore.shared.deletedTasks.first(where: { $0.id == snapshot.id }) {
+                existing.deletedDate = nil
+                existing.lastTouchedDate = Date()
+                if existing.reminderDate != nil {
+                    ReminderService.shared.scheduleReminder(for: existing)
+                }
+            } else {
+                let restored = TodoTask(
+                    id: snapshot.id,
+                    title: snapshot.title,
+                    list: snapshot.list,
+                    status: snapshot.status,
+                    notes: snapshot.notes,
+                    reminderDate: snapshot.reminderDate,
+                    orderIndex: snapshot.orderIndex
+                )
+                DataStore.shared.context.insert(restored)
+                if restored.reminderDate != nil {
+                    ReminderService.shared.scheduleReminder(for: restored)
+                }
             }
         }
         

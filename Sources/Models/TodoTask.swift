@@ -18,6 +18,7 @@ public final class TodoTask: Identifiable {
     public var checklistJSON: String?
     public var lastTouchedDate: Date?
     public var focusSecondsLogged: Int
+    public var deletedDate: Date?
 
     public init(
         id: UUID = UUID(),
@@ -34,7 +35,8 @@ public final class TodoTask: Identifiable {
         isEvening: Bool = false,
         checklistJSON: String? = nil,
         lastTouchedDate: Date? = nil,
-        focusSecondsLogged: Int = 0
+        focusSecondsLogged: Int = 0,
+        deletedDate: Date? = nil
     ) {
         self.id = id
         self.title = title
@@ -51,6 +53,7 @@ public final class TodoTask: Identifiable {
         self.checklistJSON = checklistJSON
         self.lastTouchedDate = lastTouchedDate ?? creationDate
         self.focusSecondsLogged = focusSecondsLogged
+        self.deletedDate = deletedDate
     }
 
     public var list: TaskListType {
@@ -70,8 +73,12 @@ public final class TodoTask: Identifiable {
         }
     }
     
+    public var isDeleted: Bool {
+        deletedDate != nil
+    }
+    
     public var isStaleSomeday: Bool {
-        guard list == .someday, status != .completed, !isArchived else { return false }
+        guard list == .someday, status != .completed, !isArchived, !isDeleted else { return false }
         let touchDate = lastTouchedDate ?? creationDate
         let staleThreshold = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date().addingTimeInterval(-30 * 86400)
         return touchDate < staleThreshold

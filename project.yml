@@ -20,6 +20,24 @@ targets:
         buildPhase: resources
     info:
       path: App-Info.plist
+      properties:
+        CFBundleURLTypes:
+          - CFBundleURLName: com.cale.Grind
+            CFBundleURLSchemes:
+              - grind
+        NSServices:
+          - NSMenuItem:
+              default: Send to Grind
+            NSMessage: handleSendToGrindService
+            NSPortName: Grind
+            NSSendTypes:
+              - NSPasteboardTypeString
+              - public.utf8-plain-text
+              - NSStringPboardType
+        NSRemindersUsageDescription: Grind accesses your reminders so you can import tasks into your daily board.
+        NSRemindersFullAccessUsageDescription: Grind accesses your reminders so you can import tasks into your daily board.
+        NSCalendarsUsageDescription: Grind shows your today calendar events alongside your tasks.
+        NSCalendarsFullAccessUsageDescription: Grind shows your today calendar events alongside your tasks.
     entitlements:
       path: App-Entitlements.plist
     settings:
