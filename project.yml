@@ -21,6 +21,8 @@ targets:
     info:
       path: App-Info.plist
       properties:
+        CFBundleIconFile: AppIcon
+        CFBundleIconName: AppIcon
         CFBundleURLTypes:
           - CFBundleURLName: com.cale.Grind
             CFBundleURLSchemes:

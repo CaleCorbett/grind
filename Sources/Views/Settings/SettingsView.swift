@@ -284,7 +284,7 @@ public struct SettingsView: View {
         VStack(spacing: 12) {
             Spacer()
             
-            Image(nsImage: NSImage(named: NSImage.applicationIconName) ?? NSImage())
+            Image(nsImage: NSImage(named: "AppIcon") ?? NSImage(named: NSImage.applicationIconName) ?? (Bundle.main.path(forResource: "AppIcon", ofType: "icns").flatMap { NSImage(contentsOfFile: $0) }) ?? NSImage())
                 .resizable()
                 .frame(width: 64, height: 64)
             
