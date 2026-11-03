@@ -29,13 +29,14 @@ struct GrindApp: App {
         WindowGroup {
             MainView()
                 .modelContainer(DataStore.shared.container)
-                .frame(minWidth: 880, minHeight: 560)
+                .frame(minWidth: 1080, minHeight: 640)
                 .onOpenURL { url in
                     handleIncomingURL(url)
                 }
         }
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unified(showsTitle: false))
+        .defaultSize(width: 1200, height: 740)
         
         // Settings Window (Cmd+,)
         Settings {

@@ -61,9 +61,12 @@ public struct MainView: View {
                 // The 3 Signature Lists (or Single Focused Card)
                 GeometryReader { geo in
                     let isSingleFocus = (focusedList != nil)
+                    let totalGaps = CGFloat(max(0, visibleLists.count - 1)) * 18.0
+                    let availableWidth = max(0, geo.size.width - 56.0 - totalGaps)
+                    let calculatedCardWidth = availableWidth / CGFloat(max(1, visibleLists.count))
                     let cardWidth = isSingleFocus
-                        ? min(680, max(380, geo.size.width - 64))
-                        : max(290, (geo.size.width - 56 - 36) / 3)
+                        ? min(720, max(420, geo.size.width - 64))
+                        : max(340, calculatedCardWidth)
                     
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(alignment: .top, spacing: 18) {
@@ -256,6 +259,7 @@ public struct MainView: View {
             AutoMoveService.shared.performDailySweep()
             installKeyboardNavigationMonitor()
             checkFreshStartRitual()
+            ensureMinimumOptimalWindowSize()
         }
         .onDisappear {
             if let monitor = keyMonitor {
@@ -827,6 +831,20 @@ public struct MainView: View {
         if settings.lastFreshStartDateString != todayStr && !store.carryoverTodayTasks.isEmpty {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 isShowingFreshStart = true
+            }
+        }
+    }
+    
+    private func ensureMinimumOptimalWindowSize() {
+        DispatchQueue.main.async {
+            guard let window = NSApp.windows.first(where: { $0.canBecomeMain && !$0.isMiniaturized }) else { return }
+            let current = window.frame
+            if current.width < 1180 || current.height < 720 {
+                let targetWidth: CGFloat = max(current.width, 1200)
+                let targetHeight: CGFloat = max(current.height, 740)
+                let newX = max(0, current.origin.x - (targetWidth - current.width) / 2)
+                let newY = max(0, current.origin.y - (targetHeight - current.height) / 2)
+                window.setFrame(NSRect(x: newX, y: newY, width: targetWidth, height: targetHeight), display: true, animate: true)
             }
         }
     }
