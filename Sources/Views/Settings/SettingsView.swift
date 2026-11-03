@@ -38,8 +38,8 @@ public struct SettingsView: View {
                     Label("About", systemImage: "info.circle")
                 }
         }
-        .frame(width: 500, height: 420)
-        .padding(10)
+        .frame(width: 590, height: 490)
+        .padding(12)
     }
     
     // MARK: - General Tab
