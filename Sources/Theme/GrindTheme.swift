@@ -13,6 +13,8 @@ public struct GrindTheme {
     public static let expandSpring = Animation.spring(response: 0.38, dampingFraction: 0.82)
 }
 
+public typealias SlateTheme = GrindTheme
+
 public enum GeistWeight {
     case regular
     case medium

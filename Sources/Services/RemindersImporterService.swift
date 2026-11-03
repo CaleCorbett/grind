@@ -69,7 +69,7 @@ public final class RemindersImporterService {
         
         let granted = await requestRemindersAccess()
         guard granted else {
-            throw NSError(domain: "Grind.RemindersImporter", code: 403, userInfo: [NSLocalizedDescriptionKey: "Reminders access was not granted."])
+            throw NSError(domain: "Slate.RemindersImporter", code: 403, userInfo: [NSLocalizedDescriptionKey: "Reminders access was not granted."])
         }
         
         let predicate = eventStore.predicateForIncompleteReminders(withDueDateStarting: nil, ending: nil, calendars: nil)

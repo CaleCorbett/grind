@@ -13,7 +13,7 @@ public final class ExportService {
         let store = DataStore.shared
         let dateStr = AppSettings.streakDateFormatter.string(from: Date())
         var lines: [String] = [
-            "# Grind To-Do Outline",
+            "# Slate To-Do Outline",
             "Exported: \(dateStr)",
             ""
         ]

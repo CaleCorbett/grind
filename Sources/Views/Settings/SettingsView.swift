@@ -46,11 +46,11 @@ public struct SettingsView: View {
     private var generalTab: some View {
         Form {
             Section("Startup & System") {
-                Toggle("Launch Grind at Login", isOn: Binding(
+                Toggle("Launch Slate at Login", isOn: Binding(
                     get: { settings.launchAtLogin },
                     set: { settings.launchAtLogin = $0 }
                 ))
-                Text("Start Grind automatically in your menu bar when you boot or log into your Mac.")
+                Text("Start Slate automatically in your menu bar when you boot or log into your Mac.")
                     .font(.caption)
                     .foregroundColor(GrindColors.secondary)
             }
@@ -231,7 +231,7 @@ public struct SettingsView: View {
                     Text("Import from Apple Reminders or Things 3")
                         .font(.geist(.medium, size: 13))
                         .foregroundColor(GrindColors.primary)
-                    Text("Seamlessly bring existing incomplete tasks, reminders, and checklists into Grind's Today, Next, or Someday lists.")
+                    Text("Bring existing incomplete tasks, reminders, and checklists into Slate's Today, Next, or Someday lists.")
                         .font(.caption)
                         .foregroundColor(GrindColors.secondary)
                 }
@@ -288,7 +288,7 @@ public struct SettingsView: View {
                 .resizable()
                 .frame(width: 64, height: 64)
             
-            Text("Grind")
+            Text("Slate")
                 .font(.geist(.bold, size: 22))
                 .foregroundColor(GrindColors.primary)
             
@@ -296,7 +296,7 @@ public struct SettingsView: View {
                 .font(.geist(.regular, size: 12))
                 .foregroundColor(GrindColors.secondary)
             
-            Text("Focus. Check. Repeat.")
+            Text("Clean slate. Quiet focus.")
                 .font(.geist(.medium, size: 14))
                 .foregroundColor(GrindColors.primary)
             

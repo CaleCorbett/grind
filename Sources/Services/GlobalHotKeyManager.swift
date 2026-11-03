@@ -76,7 +76,7 @@ public final class GlobalHotKeyManager: ObservableObject {
             return
         }
         
-        // If Grind's main window is already active and key, use the in-window HUD
+        // If Slate's main window is already active and key, use the in-window HUD
         FrontmostAppCaptureService.shared.captureFrontmostContext()
         if NSApp.isActive, let keyWin = NSApp.keyWindow, !(keyWin is FloatingQuickAddNSPanel) {
             shouldOpenQuickAdd.toggle()

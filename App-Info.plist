@@ -15,7 +15,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
+	<string>Slate</string>
+	<key>CFBundleDisplayName</key>
+	<string>Slate</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -24,35 +26,35 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.cale.Grind</string>
+			<string>com.cale.Slate</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>grind</string>
+				<string>slate</string>
 			</array>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>Grind shows your today calendar events alongside your tasks.</string>
+	<string>Slate shows your today calendar events alongside your tasks.</string>
 	<key>NSCalendarsUsageDescription</key>
-	<string>Grind shows your today calendar events alongside your tasks.</string>
+	<string>Slate shows your today calendar events alongside your tasks.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
-	<string>Grind accesses your reminders so you can import tasks into your daily board.</string>
+	<string>Slate accesses your reminders so you can import tasks into your daily board.</string>
 	<key>NSRemindersUsageDescription</key>
-	<string>Grind accesses your reminders so you can import tasks into your daily board.</string>
+	<string>Slate accesses your reminders so you can import tasks into your daily board.</string>
 	<key>NSServices</key>
 	<array>
 		<dict>
 			<key>NSMenuItem</key>
 			<dict>
 				<key>default</key>
-				<string>Send to Grind</string>
+				<string>Send to Slate</string>
 			</dict>
 			<key>NSMessage</key>
-			<string>handleSendToGrindService</string>
+			<string>handleSendToSlateService</string>
 			<key>NSPortName</key>
-			<string>Grind</string>
+			<string>Slate</string>
 			<key>NSSendTypes</key>
 			<array>
 				<string>NSPasteboardTypeString</string>

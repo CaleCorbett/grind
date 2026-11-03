@@ -70,3 +70,5 @@ public struct GrindColors {
         }
     }
 }
+
+public typealias SlateColors = GrindColors

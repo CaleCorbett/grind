@@ -4,4 +4,4 @@ DerivedData/
 .build/
 *.xcuserstate
 xcuserdata/
-Grind.xcodeproj/
+*.xcodeproj/

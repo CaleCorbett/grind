@@ -171,7 +171,7 @@ public final class ReminderService: NSObject, UNUserNotificationCenterDelegate {
     private func addNotificationRequest(id: String, title: String, listTitle: String, at reminderDate: Date) {
         guard let center = notificationCenter else { return }
         let content = UNMutableNotificationContent()
-        content.title = "Grind"
+        content.title = "Slate"
         content.subtitle = listTitle
         content.body = title
         content.sound = .default

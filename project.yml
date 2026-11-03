@@ -1,4 +1,4 @@
-name: Grind
+name: Slate
 options:
   bundleIdPrefix: com.cale
   deploymentTarget:
@@ -11,7 +11,7 @@ settings:
   CODE_SIGN_STYLE: Manual
   DEVELOPMENT_TEAM: ""
 targets:
-  Grind:
+  Slate:
     type: application
     platform: macOS
     sources:
@@ -23,27 +23,30 @@ targets:
       properties:
         CFBundleIconFile: AppIcon
         CFBundleIconName: AppIcon
+        CFBundleName: Slate
+        CFBundleDisplayName: Slate
         CFBundleURLTypes:
-          - CFBundleURLName: com.cale.Grind
+          - CFBundleURLName: com.cale.Slate
             CFBundleURLSchemes:
-              - grind
+              - slate
         NSServices:
           - NSMenuItem:
-              default: Send to Grind
-            NSMessage: handleSendToGrindService
-            NSPortName: Grind
+              default: Send to Slate
+            NSMessage: handleSendToSlateService
+            NSPortName: Slate
             NSSendTypes:
               - NSPasteboardTypeString
               - public.utf8-plain-text
               - NSStringPboardType
-        NSRemindersUsageDescription: Grind accesses your reminders so you can import tasks into your daily board.
-        NSRemindersFullAccessUsageDescription: Grind accesses your reminders so you can import tasks into your daily board.
-        NSCalendarsUsageDescription: Grind shows your today calendar events alongside your tasks.
-        NSCalendarsFullAccessUsageDescription: Grind shows your today calendar events alongside your tasks.
+        NSRemindersUsageDescription: Slate accesses your reminders so you can import tasks into your daily board.
+        NSRemindersFullAccessUsageDescription: Slate accesses your reminders so you can import tasks into your daily board.
+        NSCalendarsUsageDescription: Slate shows your today calendar events alongside your tasks.
+        NSCalendarsFullAccessUsageDescription: Slate shows your today calendar events alongside your tasks.
     entitlements:
       path: App-Entitlements.plist
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.cale.Grind
+      PRODUCT_BUNDLE_IDENTIFIER: com.cale.Slate
+      PRODUCT_NAME: Slate
       ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
       ENABLE_HARDENED_RUNTIME: YES
       CODE_SIGN_ENTITLEMENTS: App-Entitlements.plist

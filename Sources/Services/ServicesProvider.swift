@@ -12,12 +12,16 @@ public final class ServicesProvider: NSObject {
         }
     }
     
-    @objc public func handleSendToGrindService(_ pboard: NSPasteboard, userData: String?, error: AutoreleasingUnsafeMutablePointer<NSString?>?) {
+    @objc public func handleSendToSlateService(_ pboard: NSPasteboard, userData: String?, error: AutoreleasingUnsafeMutablePointer<NSString?>?) {
         guard let text = pboard.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
             return
         }
         
         processIncomingText(text)
+    }
+    
+    @objc public func handleSendToGrindService(_ pboard: NSPasteboard, userData: String?, error: AutoreleasingUnsafeMutablePointer<NSString?>?) {
+        handleSendToSlateService(pboard, userData: userData, error: error)
     }
     
     public func processIncomingText(_ text: String) {

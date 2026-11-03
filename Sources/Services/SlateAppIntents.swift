@@ -2,8 +2,8 @@ import Foundation
 import AppIntents
 
 public struct AddTaskIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Add Task to Grind"
-    public static var description = IntentDescription("Creates a new to-do in Grind.")
+    public static var title: LocalizedStringResource = "Add Task to Slate"
+    public static var description = IntentDescription("Creates a new to-do in Slate.")
     
     @Parameter(title: "Title")
     public var title: String
@@ -40,7 +40,7 @@ public struct AddTaskIntent: AppIntent {
 }
 
 public struct GetTodayTasksIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Get Today Tasks from Grind"
+    public static var title: LocalizedStringResource = "Get Today Tasks from Slate"
     public static var description = IntentDescription("Returns the list of active to-dos for Today.")
     
     public init() {}
@@ -57,7 +57,7 @@ public struct GetTodayTasksIntent: AppIntent {
 }
 
 public struct ToggleTaskIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Complete Grind Task"
+    public static var title: LocalizedStringResource = "Complete Slate Task"
     public static var description = IntentDescription("Marks the first matching task as complete.")
     
     @Parameter(title: "Task Title")
@@ -76,13 +76,13 @@ public struct ToggleTaskIntent: AppIntent {
             DataStore.shared.toggleTaskStatus(match)
             return .result(dialog: "Updated “\(match.title)” to \(match.status.rawValue == 2 ? "Done" : "In Progress").")
         } else {
-            return .result(dialog: "No task matching “\(taskTitle)” found in Grind.")
+            return .result(dialog: "No task matching “\(taskTitle)” found in Slate.")
         }
     }
 }
 
-public struct GrindFocusFilterIntent: SetFocusFilterIntent {
-    public static var title: LocalizedStringResource = "Set Grind Focus Mode"
+public struct SlateFocusFilterIntent: SetFocusFilterIntent {
+    public static var title: LocalizedStringResource = "Set Slate Focus Mode"
     public static var description = IntentDescription("Filters visible to-do lists or emphasizes Today during an active macOS Focus mode.")
     
     @Parameter(title: "Focused List", default: "today")
@@ -92,7 +92,7 @@ public struct GrindFocusFilterIntent: SetFocusFilterIntent {
     public var hideSomeday: Bool
     
     public var displayRepresentation: DisplayRepresentation {
-        DisplayRepresentation(title: "Grind Focus Filter")
+        DisplayRepresentation(title: "Slate Focus Filter")
     }
     
     public init() {}
@@ -112,7 +112,9 @@ public struct GrindFocusFilterIntent: SetFocusFilterIntent {
     }
 }
 
-public struct GrindShortcutsProvider: AppShortcutsProvider {
+public typealias GrindFocusFilterIntent = SlateFocusFilterIntent
+
+public struct SlateShortcutsProvider: AppShortcutsProvider {
     public static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: AddTaskIntent(),
@@ -135,3 +137,4 @@ public struct GrindShortcutsProvider: AppShortcutsProvider {
     }
 }
 
+public typealias GrindShortcutsProvider = SlateShortcutsProvider

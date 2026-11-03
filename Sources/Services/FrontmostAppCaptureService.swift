@@ -24,9 +24,9 @@ public final class FrontmostAppCaptureService {
     
     @discardableResult
     public func captureFrontmostContext() -> CapturedContext? {
-        let ownBundleID = Bundle.main.bundleIdentifier ?? "com.calecorbett.Grind"
+        let ownBundleID = Bundle.main.bundleIdentifier ?? "com.cale.Slate"
         
-        // Find frontmost app other than Grind itself
+        // Find frontmost app other than Slate itself
         guard let frontApp = NSWorkspace.shared.runningApplications.first(where: {
             $0.isActive && $0.bundleIdentifier != ownBundleID
         }) ?? NSWorkspace.shared.frontmostApplication,

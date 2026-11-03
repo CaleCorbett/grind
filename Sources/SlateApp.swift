@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct GrindApp: App {
+struct SlateApp: App {
     @ObservedObject private var settings = AppSettings.shared
     @ObservedObject private var store = DataStore.shared
     @ObservedObject private var focusTimer = FocusTimerService.shared
@@ -61,7 +61,7 @@ struct GrindApp: App {
         if focusTimer.isRunning {
             return focusTimer.formattedRemainingTime
         }
-        return "Grind"
+        return "Slate"
     }
     
     private var menuBarSystemImage: String {
@@ -89,7 +89,7 @@ struct GrindApp: App {
     }
     
     private func handleIncomingURL(_ url: URL) {
-        guard url.scheme?.lowercased() == "grind" else { return }
+        guard url.scheme?.lowercased() == "slate" else { return }
         let host = url.host?.lowercased() ?? url.pathComponents.first?.lowercased()
         
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return }

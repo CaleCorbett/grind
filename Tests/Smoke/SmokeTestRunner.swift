@@ -206,7 +206,7 @@ struct SmokeTestRunner {
 
         // Test ExportService (Markdown, JSON, Standup)
         let mdExport = ExportService.shared.generateMarkdownOutline()
-        check(mdExport.contains("# Grind To-Do Outline") && mdExport.contains("## Today"), "ExportService generates valid Markdown outline with Today header")
+        check(mdExport.contains("# Slate To-Do Outline") && mdExport.contains("## Today"), "ExportService generates valid Markdown outline with Today header")
         let jsonExport = ExportService.shared.generateJSONBackup()
         check(jsonExport != nil && !jsonExport!.isEmpty, "ExportService generates non-empty JSON backup data")
         if let data = jsonExport,

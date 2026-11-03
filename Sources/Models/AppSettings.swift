@@ -243,7 +243,7 @@ public final class AppSettings: ObservableObject {
         self.showInMenuBar = d.object(forKey: "showInMenuBar") as? Bool ?? true
         self.menuBarBadge = d.string(forKey: "menuBarBadge") ?? "remaining"
         self.appearanceMode = d.string(forKey: "appearanceMode") ?? "system"
-        self.selectedAppIcon = d.string(forKey: "selectedAppIcon") ?? "Grind Dark"
+        self.selectedAppIcon = d.string(forKey: "selectedAppIcon") ?? "Slate Dark"
         self.archiveImmediately = d.object(forKey: "archiveImmediately") as? Bool ?? false
         self.autoMoveRemindersToToday = d.object(forKey: "autoMoveRemindersToToday") as? Bool ?? true
         self.todayCapLimit = d.object(forKey: "todayCapLimit") as? Int ?? 5
