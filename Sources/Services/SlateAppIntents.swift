@@ -138,3 +138,4 @@ public struct SlateShortcutsProvider: AppShortcutsProvider {
 }
 
 public typealias GrindShortcutsProvider = SlateShortcutsProvider
+

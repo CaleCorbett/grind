@@ -1,4 +1,4 @@
-# Grind — Focus. Check. Repeat.
+# Slate — Clean slate. Quiet focus.
 
 A 100% native macOS to-do application built on a strict, minimalist three-list system: **Today**, **Next**, and **Someday**. Zero clutter, zero endless organization traps—know what to do today and execute.
 
@@ -19,47 +19,50 @@ A 100% native macOS to-do application built on a strict, minimalist three-list s
   - Global capture: Press `^⌥Space` (Control + Option + Space) from anywhere in macOS.
   - Type e.g. `dentist Friday 3pm` → automatically sets reminder for Friday 3:00 PM and selects the right card.
   - Real-time pill chips for list selection and date confirmation.
+- **macOS Services & Deep Links**:
+  - Highlight text anywhere on macOS → Right Click → Services → **Send to Slate**.
+  - Deep link support: `slate://add?title=Deep%20Work&list=today`.
+- **Keyboard-First Navigation**:
+  - Vim/arrow keys (`↑`/`↓`/`←`/`→`, `J`/`K`/`H`/`L`) to navigate between cards and tasks.
+  - `Space` to cycle status, `Return` to inline expand, `⌘T`/`⌘E`/`⌘S` to move, `⌫` to delete.
+- **Safety Net & Recently Deleted (Trash)**:
+  - Soft deletion with instant `⌘Z` undo toast.
+  - Dedicated trash bin with individual task restore and "Empty Trash" purge.
+- **Backup & Standup Export**:
+  - Export all to-dos as clean Markdown outline (`.md`) or full JSON backup (`.json`).
+  - Copy Today's formatted standup summary to clipboard (`⌘⇧C`).
+- **Focus Timer & Fresh Start Ritual**:
+  - 25-minute quiet focus timer with menu bar countdown and automatic progress logging.
+  - Morning fresh start prompt to review yesterday's unfinished tasks without guilt.
 - **Custom Tactile Sound Effects**:
-  - Original synthesized audio feedback for task completion, in-progress sweep, deletion, and quick-add chimes.
+  - Synthesized audio feedback for task completion, in-progress sweep, deletion, and quick-add chimes.
 - **Geist Typography & Custom Styling**:
-  - Bundled with Vercel Geist fonts:
-    - `Geist-Regular.otf`, `Geist-Medium.otf`, `Geist-SemiBold.otf`, `Geist-Bold.otf`
-    - `GeistMono-*` and `GeistPixel-Square.otf`
-  - Exact card corner radiuses, resting and floating shadow stacks, and dynamic light/dark colors.
-- **macOS Menu Bar Extra**:
-  - Menu bar icon with badge counter for Today's tasks.
-  - Dropdown popover allowing you to check off Today's tasks and add new items without opening the main window.
-- **Task Detail Sheet**:
-  - Multiline notes editor with link detection.
-  - Reminder picker with date & time.
-  - Card selector and status controls.
-- **Auto-Move & Archive System**:
-  - Daily sweep rolling over today's reminders to the Today card.
-  - Search and browse completed tasks with one-click restore.
-  - Floating Delete Undo toast with `⌘Z` support.
-- **Offline-First Persistence**:
-  - Built on SwiftData with automatic persistence and zero telemetry.
+  - Bundled with Vercel Geist fonts (`Geist-Regular`, `Medium`, `SemiBold`, `Bold`, `Mono`).
+  - Authentic macOS Big Sur architectural squircle icon with tactile dark graphite and signal-amber accent.
+- **Offline-First SwiftData Persistence**:
+  - 100% local SQLite storage, zero telemetry, zero accounts, and 0.0% idle CPU.
 
 ---
 
 ## 🚀 Running the App
 
-### 1. Build and Package `.app`
+### 1. Build and Install
 Run the build script from the repository root:
 ```bash
 ./build_app.sh
 ```
-This compiles all Swift sources with `swiftc`, embeds all fonts, sounds, and assets into `build/Grind.app`, and signs the bundle.
+This compiles the application, embeds all assets, and installs directly to `/Applications/Slate.app`.
 
 ### 2. Launch the Application
 ```bash
-open build/Grind.app
+open /Applications/Slate.app
 ```
 
 ### 3. Open in Xcode
-Open the directory in Xcode to develop or debug:
+Generate the project file and open in Xcode:
 ```bash
-open -a Xcode .
+xcodegen generate
+open Slate.xcodeproj
 ```
 
 ---
@@ -68,11 +71,16 @@ open -a Xcode .
 
 | Shortcut | Action |
 |---|---|
-| `^⌥Space` | Global Quick-Add HUD (Any app in macOS) |
-| `⌘N` | Open Quick-Add HUD inside Grind |
+| `^⌥Space` | Global Quick-Add HUD (from any app in macOS) |
+| `⌘N` | Open Quick-Add HUD inside Slate |
 | `⌘Z` | Undo last delete |
+| `⌘⇧C` | Copy Today's tasks as Standup Summary |
+| `↑` / `↓` / `J` / `K` | Move selection up and down |
+| `←` / `→` / `H` / `L` | Switch between Today, Next, and Someday |
+| `Space` | Cycle task status (Incomplete → In Progress → Done) |
+| `⌘T` / `⌘E` / `⌘S` | Move selected task to Today, Next, or Someday |
+| `⌫` (Delete) | Move selected task to Trash |
 | `⌘,` | Open Settings |
-| `Return` | Save task in inline entry or Quick-Add |
 | `Escape` | Dismiss modal / Quick-Add HUD |
 
 ---
@@ -82,4 +90,3 @@ open -a Xcode .
 - **Code**: Licensed under the [MIT License](LICENSE).
 - **Typography**: [Geist Font Family](https://vercel.com/font) by Vercel Inc., licensed under the [SIL Open Font License 1.1](Resources/Geist-OFL.txt).
 - **Audio & Assets**: All audio effects, app icons, and graphics are original creations or native Apple SF Symbols.
-- **Disclaimer**: *Grind is an independent, open-source productivity app created for focused task management. It is not affiliated with, sponsored by, or endorsed by Studio 257 or Hustla.*
