@@ -118,7 +118,7 @@ public struct ImportTasksSheet: View {
                         .font(.geist(.medium, size: 14))
                         .foregroundColor(GrindColors.primary)
                     
-                    Text("Grind will scan your Apple Reminders lists for incomplete tasks and map their due dates to Today or Next.")
+                    Text("Slate will scan your Apple Reminders lists for incomplete tasks and map their due dates to Today or Next.")
                         .font(.geist(.regular, size: 12))
                         .foregroundColor(GrindColors.secondary)
                         .multilineTextAlignment(.center)

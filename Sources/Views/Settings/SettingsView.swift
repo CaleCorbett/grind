@@ -135,9 +135,9 @@ public struct SettingsView: View {
                 .pickerStyle(.segmented)
                 
                 Picker("App Icon", selection: $settings.selectedAppIcon) {
-                    Text("Grind Dark (Default)").tag("Grind Dark")
-                    Text("Grind Light").tag("Grind Light")
-                    Text("Grind Minimal").tag("Grind Minimal")
+                    Text("Slate Dark (Default)").tag("Slate Dark")
+                    Text("Slate Light").tag("Slate Light")
+                    Text("Slate Minimal").tag("Slate Minimal")
                 }
             }
         }

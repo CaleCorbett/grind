@@ -407,20 +407,27 @@ public struct MainView: View {
         HStack(alignment: .center) {
             // App Branding & Title
             HStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(GrindColors.primary)
+                if let icon = NSImage(named: "AppIcon") ?? (Bundle.main.path(forResource: "AppIcon", ofType: "icns").flatMap { NSImage(contentsOfFile: $0) }) {
+                    Image(nsImage: icon)
+                        .resizable()
                         .frame(width: 28, height: 28)
-                    Text("G")
-                        .font(.geist(.bold, size: 16))
-                        .foregroundColor(GrindColors.primaryInverted)
+                        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                } else {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(GrindColors.primary)
+                            .frame(width: 28, height: 28)
+                        Text("S")
+                            .font(.geist(.bold, size: 16))
+                            .foregroundColor(GrindColors.primaryInverted)
+                    }
                 }
                 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("Grind")
+                    Text("Slate")
                         .font(.geist(.bold, size: 18))
                         .foregroundColor(GrindColors.primary)
-                    Text("Focus. Check. Repeat.")
+                    Text("Clean slate. Quiet focus.")
                         .font(.geist(.regular, size: 11))
                         .foregroundColor(GrindColors.secondary)
                 }
@@ -511,7 +518,7 @@ public struct MainView: View {
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .help("Grind Settings (⌘,)")
+                .help("Slate Settings (⌘,)")
             }
         }
     }

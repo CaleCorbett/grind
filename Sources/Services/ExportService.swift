@@ -152,7 +152,7 @@ public final class ExportService {
         
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.plainText]
-        panel.nameFieldStringValue = "grind-tasks-\(dateStr).md"
+        panel.nameFieldStringValue = "slate-tasks-\(dateStr).md"
         if panel.runModal() == .OK, let url = panel.url {
             try? data.write(to: url)
             UndoToastManager.shared.showInfo("Exported Markdown outline to \(url.lastPathComponent)")
@@ -165,7 +165,7 @@ public final class ExportService {
         
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.json]
-        panel.nameFieldStringValue = "grind-backup-\(dateStr).json"
+        panel.nameFieldStringValue = "slate-backup-\(dateStr).json"
         if panel.runModal() == .OK, let url = panel.url {
             try? data.write(to: url)
             UndoToastManager.shared.showInfo("Exported JSON backup to \(url.lastPathComponent)")
