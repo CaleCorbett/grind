@@ -27,24 +27,58 @@ public final class DataStore: ObservableObject {
     private init() {
         let schema = Schema([TodoTask.self])
         let inMemoryEnv = ProcessInfo.processInfo.environment["GRIND_IN_MEMORY_STORE"] == "1"
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemoryEnv)
-        if let persistentContainer = try? ModelContainer(for: schema, configurations: [config]) {
-            self.container = persistentContainer
-        } else {
-            // Fallback to in-memory store if on-disk schema cannot be migrated or opened
+        
+        if inMemoryEnv {
             let memConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
             self.container = (try? ModelContainer(for: schema, configurations: [memConfig])) ?? {
-                fatalError("Fatal: Failed to initialize even an in-memory ModelContainer")
+                fatalError("Fatal: Failed to initialize in-memory ModelContainer")
             }()
+        } else {
+            let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+            if let persistentContainer = try? ModelContainer(for: schema, configurations: [config]) {
+                self.container = persistentContainer
+            } else {
+                // Persistent container failed to load (e.g. incompatible schema file from old pre-v2 build).
+                // Safely back up the incompatible store files and re-create a clean, persistent on-disk database.
+                Self.recoverIncompatibleStore(at: config.url)
+                if let freshPersistentContainer = try? ModelContainer(for: schema, configurations: [config]) {
+                    self.container = freshPersistentContainer
+                } else {
+                    let fallbackConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+                    self.container = (try? ModelContainer(for: schema, configurations: [fallbackConfig])) ?? {
+                        fatalError("Fatal: Failed to initialize ModelContainer")
+                    }()
+                }
+            }
         }
+        
         seedStarterTasksIfNeeded()
         reloadAll()
     }
     
+    private static func recoverIncompatibleStore(at url: URL) {
+        let fm = FileManager.default
+        let storePath = url.path
+        let walPath = storePath + "-wal"
+        let shmPath = storePath + "-shm"
+        let timestamp = Int(Date().timeIntervalSince1970)
+        let backupPath = storePath + ".incompatible.\(timestamp).bak"
+        
+        try? fm.moveItem(atPath: storePath, toPath: backupPath)
+        try? fm.removeItem(atPath: walPath)
+        try? fm.removeItem(atPath: shmPath)
+    }
+    
     public func seedStarterTasksIfNeeded() {
+        let hasSeeded = UserDefaults.standard.bool(forKey: "hasSeededInitialTasks")
+        guard !hasSeeded else { return }
+        
         let descriptor = FetchDescriptor<TodoTask>()
         let count = (try? context.fetchCount(descriptor)) ?? 0
-        guard count == 0 else { return }
+        if count > 0 {
+            UserDefaults.standard.set(true, forKey: "hasSeededInitialTasks")
+            return
+        }
         
         let starterTasks: [(String, TaskListType, TaskStatus, String?, Date?)] = [
             // Today
@@ -80,6 +114,7 @@ public final class DataStore: ObservableObject {
             context.insert(task)
         }
         try? context.save()
+        UserDefaults.standard.set(true, forKey: "hasSeededInitialTasks")
     }
     
     public func reloadAll() {

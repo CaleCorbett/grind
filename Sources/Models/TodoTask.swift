@@ -5,19 +5,19 @@ import SwiftData
 public final class TodoTask: Identifiable {
     @Attribute(.unique) public var id: UUID
     public var title: String
-    public var rawList: String
-    public var rawStatus: Int
+    public var rawList: String = "today"
+    public var rawStatus: Int = 0
     public var notes: String?
     public var reminderDate: Date?
-    public var creationDate: Date
+    public var creationDate: Date = Date()
     public var completionDate: Date?
-    public var orderIndex: Int
-    public var isArchived: Bool
+    public var orderIndex: Int = 0
+    public var isArchived: Bool = false
     public var recurrenceRule: String?
-    public var isEvening: Bool
+    public var isEvening: Bool = false
     public var checklistJSON: String?
     public var lastTouchedDate: Date?
-    public var focusSecondsLogged: Int
+    public var focusSecondsLogged: Int = 0
     public var deletedDate: Date?
 
     public init(
