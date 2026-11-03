@@ -17,9 +17,9 @@ public enum TaskListType: String, Codable, CaseIterable, Identifiable, Sendable 
     
     public var subtitle: String {
         switch self {
-        case .today: return "Your focused daily list. Short and ruthless."
-        case .next: return "What's coming up soon without cluttering today."
-        case .someday: return "Ideas, aspirations, and maybe-laters."
+        case .today: return "Daily focus"
+        case .next: return "Upcoming to-dos"
+        case .someday: return "Ideas & aspirations"
         }
     }
     

@@ -367,45 +367,7 @@ public struct TaskListCardView: View {
             // Header Action Buttons
             let isAllDoneInCard = !tasks.isEmpty && completedCount == tasks.count
             HStack(spacing: 6) {
-                // Mark All Complete / Incomplete in Group Button
-                if !tasks.isEmpty {
-                    Button(action: {
-                        toggleMarkAllCompleteInGroup()
-                    }) {
-                        Image(systemName: isAllDoneInCard ? "checkmark.circle.fill" : "checkmark.circle")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(isAllDoneInCard ? GrindColors.primaryInverted : GrindColors.secondary)
-                            .frame(width: 26, height: 26)
-                            .background(isAllDoneInCard ? GrindColors.primary : GrindColors.hair.opacity(0.6))
-                            .clipShape(Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .help(isAllDoneInCard ? "Mark All Incomplete in \(listType.title)" : "Mark All Complete in \(listType.title) (⇧⌘↵)")
-                    
-                    // Select All / Deselect All in Group Button
-                    Button(action: {
-                        withAnimation(GrindTheme.snapSpring) {
-                            if isAllSelectedInCard {
-                                isSelectionModeActive = false
-                                onDeselectAllInGroup(listType)
-                            } else {
-                                isSelectionModeActive = true
-                                onSelectAllInGroup(listType)
-                            }
-                        }
-                    }) {
-                        Image(systemName: isAllSelectedInCard ? "checklist.checked" : "checklist")
-                            .font(.system(size: 11.5, weight: .semibold))
-                            .foregroundColor(isAllSelectedInCard ? GrindColors.primaryInverted : GrindColors.secondary)
-                            .frame(width: 26, height: 26)
-                            .background(isAllSelectedInCard ? GrindColors.primary : GrindColors.hair.opacity(0.6))
-                            .clipShape(Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .help(isAllSelectedInCard ? "Deselect All in \(listType.title)" : "Select All in \(listType.title) (⌘A)")
-                }
-                
-                // Focus Mode Toggle Button (Hustla style)
+                // Focus Mode Toggle Button
                 Button(action: {
                     onToggleFocusCard(listType)
                 }) {
@@ -418,19 +380,6 @@ public struct TaskListCardView: View {
                 }
                 .buttonStyle(.plain)
                 .help(isFocusedCard ? "Exit Focus Mode (⌘0)" : "Focus on \(listType.title) (\(listType.shortcutDisplay))")
-                
-                Button(action: {
-                    isInputFocused = true
-                }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(GrindColors.primary)
-                        .frame(width: 26, height: 26)
-                        .background(GrindColors.hair)
-                        .clipShape(Circle())
-                }
-                .buttonStyle(.plain)
-                .help("Add to-do to \(listType.title)")
                 
                 Menu {
                     Button(isAllDoneInCard ? "Mark All Incomplete in \(listType.title)" : "Mark All Complete in \(listType.title) (\(tasks.count - completedCount) left)") {
@@ -450,6 +399,12 @@ public struct TaskListCardView: View {
                         }
                     }
                     .disabled(tasks.isEmpty)
+                    
+                    Divider()
+                    
+                    Button("Add To-Do to \(listType.title)...") {
+                        isInputFocused = true
+                    }
                     
                     Divider()
                     

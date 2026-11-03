@@ -839,9 +839,9 @@ public struct MainView: View {
         DispatchQueue.main.async {
             guard let window = NSApp.windows.first(where: { $0.canBecomeMain && !$0.isMiniaturized }) else { return }
             let current = window.frame
-            if current.width < 1180 || current.height < 720 {
-                let targetWidth: CGFloat = max(current.width, 1200)
-                let targetHeight: CGFloat = max(current.height, 740)
+            if current.width < 1260 || current.height < 740 {
+                let targetWidth: CGFloat = max(current.width, 1280)
+                let targetHeight: CGFloat = max(current.height, 760)
                 let newX = max(0, current.origin.x - (targetWidth - current.width) / 2)
                 let newY = max(0, current.origin.y - (targetHeight - current.height) / 2)
                 window.setFrame(NSRect(x: newX, y: newY, width: targetWidth, height: targetHeight), display: true, animate: true)

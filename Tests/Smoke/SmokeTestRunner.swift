@@ -485,7 +485,7 @@ struct SmokeTestRunner {
         FontManager.shared.registerCustomFonts()
 
         let mainWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 1200, height: 740),
+            contentRect: NSRect(x: 0, y: 0, width: 1280, height: 760),
             styleMask: [.titled, .closable, .resizable],
             backing: .buffered,
             defer: false
